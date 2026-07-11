@@ -52,7 +52,7 @@ function calcularPuntosTirada(dados) {
 }
 
 io.on('connection', (socket) => {
-    console.log(' Jugador conectado:', socket.id);
+    console.log('⚡ Jugador conectado:', socket.id);
 
     socket.on('crear-sala', (nombreJugador) => {
         let codigo;
@@ -76,7 +76,11 @@ io.on('connection', (socket) => {
         
         sala.jugadores.push({ id: socket.id, nombre: nombre, puntos: 0 });
         socket.join(codigo);
+        
+        // Avisar a toda la sala
         io.to(codigo).emit('jugador-unido', { jugadores: sala.jugadores });
+        // Avisar específicamente al que se acaba de unir para que cambie de pantalla
+        socket.emit('unido-a-sala', { codigo: codigo, jugadores: sala.jugadores });
     });
 
     socket.on('iniciar-partida', (codigo) => {
@@ -92,23 +96,27 @@ io.on('connection', (socket) => {
         if (!sala || sala.estado !== 'jugando') return;
         if (sala.jugadores[sala.turno].id !== socket.id) return;
         
+        // Generar dados en el servidor (anti-trampas)
         const dados = [];
         for (let i = 0; i < sala.dadosActivos; i++) dados.push(Math.floor(Math.random() * 6));
         
         const resultado = calcularPuntosTirada(dados);
         
+        // Victoria instantánea de 5 Ases
         if (dados.length === 5 && dados.every(d => d === 5)) {
             sala.estado = 'terminado';
             io.to(codigo).emit('victoria-instantanea', { ganador: sala.jugadores[sala.turno].nombre });
             return;
         }
         
+        // Tirada sin puntos (Cero patatero)
         if (resultado.puntos === 0) {
             io.to(codigo).emit('tirada-cero', { jugador: sala.jugadores[sala.turno].nombre });
             cambiarTurno(sala, codigo);
             return;
         }
 
+        // Sumar puntos y actualizar dados restantes
         sala.puntosTurno += resultado.puntos;
         sala.dadosActivos -= resultado.dadosQuePuntuan.length;
         
@@ -118,7 +126,7 @@ io.on('connection', (socket) => {
             mesaLimpia = true;
         }
 
-        // ¡IMPORTANTE! Enviamos a TODA la sala, no solo al que tiró
+        // Enviar resultado a TODA la sala
         io.to(codigo).emit('resultado-tirada', {
             dados,
             puntos: resultado.puntos,
@@ -178,4 +186,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Servidor 5.000 corriendo en puerto ${PORT}`));
+server.listen(PORT, () => console.log(` Servidor 5.000 corriendo en puerto ${PORT}`));
