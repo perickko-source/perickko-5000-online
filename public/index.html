@@ -4,48 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>5.000 - PERFECT LIMITS ONLINE</title>
-    <!-- Cargamos Socket.io directamente del servidor -->
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { --gold: #ffd700; --neon-green: #39ff14; --danger: #ff4444; --metal: #a8a8a8; }
         html, body { overflow: hidden; height: 100dvh; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; touch-action: none; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
-        /* ================= LOBBY ================= */
-        #lobby {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-            background: #050505; z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .lobby-box {
-            background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px;
-            text-align: center; width: min(92vw, 420px);
-        }
+        #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .lobby-box h1 { color: var(--gold); margin-bottom: 20px; font-size: 28px; }
-        .input-lobby {
-            width: 80%; padding: 12px; margin: 10px 0; background: #222; border: 2px solid #555;
-            color: white; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif;
-        }
+        .input-lobby { width: 80%; padding: 12px; margin: 10px 0; background: #222; border: 2px solid #555; color: white; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
         .input-lobby:focus { border-color: var(--gold); outline: none; }
-        .btn-lobby {
-            width: 80%; margin: 10px 0; padding: 12px; font-size: 16px; font-weight: bold;
-            border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer;
-        }
+        .btn-lobby { width: 80%; margin: 10px 0; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
         .btn-lobby:hover { background: rgba(255, 215, 0, 0.1); }
         .btn-lobby:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { border-color: #888; color: #888; font-size: 14px; }
         .btn-danger { border-color: var(--danger); color: var(--danger); font-size: 14px; }
-        
-        #codigo-sala-display {
-            font-size: 24px; color: var(--neon-green); margin: 15px 0; letter-spacing: 2px;
-            background: #000; padding: 10px; border-radius: 10px; border: 1px dashed var(--neon-green);
-        }
+        #codigo-sala-display { font-size: 24px; color: var(--neon-green); margin: 15px 0; letter-spacing: 2px; background: #000; padding: 10px; border-radius: 10px; border: 1px dashed var(--neon-green); }
         .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; list-style: none; }
         .lista-jugadores-lobby li { margin-bottom: 5px; color: #ccc; font-size: 14px; }
 
-        /* ================= JUEGO ================= */
         #pantalla-juego { display: none; width: 100%; height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-        
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
@@ -76,48 +55,29 @@
         .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
         button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
-        /* ================= MODAL GANADOR ================= */
-        #modal-ganador {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-            background: rgba(0,0,0,0.92); z-index: 15000;
-            display: none; align-items: center; justify-content: center;
-        }
-        .modal-ganador-contenido {
-            background: #111; border: 3px solid var(--gold); border-radius: 20px;
-            padding: 30px; text-align: center; max-width: 90%; width: 400px;
-            box-shadow: 0 0 40px rgba(255,215,0,0.4);
-        }
+        #modal-ganador { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0,0,0,0.92); z-index: 15000; display: none; align-items: center; justify-content: center; }
+        .modal-ganador-contenido { background: #111; border: 3px solid var(--gold); border-radius: 20px; padding: 30px; text-align: center; max-width: 90%; width: 400px; box-shadow: 0 0 40px rgba(255,215,0,0.4); }
         .modal-ganador-contenido h2 { color: var(--gold); font-size: 24px; margin-bottom: 15px; }
         .nombre-ganador { color: #fff; font-size: 28px; font-weight: bold; margin: 20px 0; }
-        .btn-jugar-otra {
-            background: var(--gold); color: #000; border: none; padding: 12px 25px;
-            font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px;
-        }
+        .btn-jugar-otra { background: var(--gold); color: #000; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- ================= LOBBY ================= -->
     <div id="lobby">
         <div class="lobby-box">
             <h1>🎲 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
-            
-            <!-- SECCIÓN CREAR (Visible al inicio) -->
             <div id="seccion-crear">
                 <button class="btn-lobby" onclick="crearSala()"> CREAR SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
-
-            <!-- SECCIÓN UNIRSE (Oculta al inicio) -->
             <div id="seccion-unirse" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
                 <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarCrear()">⬅️ VOLVER</button>
             </div>
-
-            <!-- SECCIÓN SALA ACTIVA (Oculta al inicio) -->
             <div id="seccion-sala" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de tu sala (compártelo):</p>
                 <div id="codigo-sala-display"></div>
@@ -125,31 +85,26 @@
                 <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
                 <button class="btn-lobby btn-danger" onclick="location.reload()"> CANCELAR</button>
             </div>
-            
             <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
         </div>
     </div>
 
-    <!-- ================= PANTALLA DE JUEGO ================= -->
     <div id="pantalla-juego">
         <div class="panel-superior">
             <div id="grid-jugadores" class="grid-jugadores"></div>
             <div class="marcador-turno"><span id="pts-turno" class="val-turno">0</span></div>
             <div id="anuncio">Esperando...</div>
         </div>
-
         <div class="fieltro">
             <div id="reserva" class="zona-reserva"></div>
             <div id="zona-tiro" class="zona-tiro"><div id="cubilete"></div></div>
         </div>
-
         <div class="controles">
             <button id="btn-plantar" class="btn-plantar" onclick="enviarPlantarse()" disabled>PLANTARSE</button>
             <button id="btn-tirar" class="btn-tirar" onclick="enviarTirada()" disabled>¡TIRAR!</button>
         </div>
     </div>
 
-    <!-- ================= MODAL GANADOR ================= -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
             <h2>🏆 ¡GANADOR!</h2>
@@ -159,19 +114,10 @@
     </div>
 
 <script>
-    // ================= CONEXIÓN AL SERVIDOR =================
     const socket = io(); 
-    
-    let miId = socket.id;
-    let codigoSala = '';
-    let miNombre = '';
-    let esMiTurno = false;
-    let jugadores = []; 
-    
-    let puntosTurno = 0;
-    let bloqueo = false;
+    let miId = socket.id, codigoSala = '', miNombre = '', esMiTurno = false, jugadores = []; 
+    let puntosTurno = 0, bloqueo = false;
 
-    // Definición visual de las caras de los dados
     const CARAS = [
         { id: 0, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
         { id: 1, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
@@ -181,61 +127,27 @@
         { id: 5, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
     ];
 
-    // ================= FUNCIONES DEL LOBBY =================
-    function mostrarUnirse() {
-        document.getElementById('seccion-crear').style.display = 'none';
-        document.getElementById('seccion-unirse').style.display = 'block';
-    }
+    function mostrarUnirse() { document.getElementById('seccion-crear').style.display = 'none'; document.getElementById('seccion-unirse').style.display = 'block'; }
+    function mostrarCrear() { document.getElementById('seccion-unirse').style.display = 'none'; document.getElementById('seccion-crear').style.display = 'block'; }
+    function crearSala() { miNombre = document.getElementById('input-nombre').value.trim(); if (!miNombre) return mostrarError("Pon un nombre"); socket.emit('crear-sala', miNombre); }
+    function unirseSala() { miNombre = document.getElementById('input-nombre').value.trim(); codigoSala = document.getElementById('input-codigo').value.trim().toUpperCase(); if (!miNombre) return mostrarError("Pon un nombre"); if (!codigoSala) return mostrarError("Pon un código"); socket.emit('unirse-sala', { codigo: codigoSala, nombre: miNombre }); }
+    function iniciarPartida() { socket.emit('iniciar-partida', codigoSala); }
+    function mostrarError(msg) { document.getElementById('mensaje-error').innerText = msg; setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000); }
 
-    function mostrarCrear() {
-        document.getElementById('seccion-unirse').style.display = 'none';
-        document.getElementById('seccion-crear').style.display = 'block';
-    }
-
-    function crearSala() {
-        miNombre = document.getElementById('input-nombre').value.trim();
-        if (!miNombre) return mostrarError("Pon un nombre");
-        socket.emit('crear-sala', miNombre);
-    }
-
-    function unirseSala() {
-        miNombre = document.getElementById('input-nombre').value.trim();
-        codigoSala = document.getElementById('input-codigo').value.trim().toUpperCase();
-        if (!miNombre) return mostrarError("Pon un nombre");
-        if (!codigoSala) return mostrarError("Pon un código");
-        socket.emit('unirse-sala', { codigo: codigoSala, nombre: miNombre });
-    }
-
-    function iniciarPartida() {
-        socket.emit('iniciar-partida', codigoSala);
-    }
-
-    function mostrarError(msg) {
-        document.getElementById('mensaje-error').innerText = msg;
-        setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000);
-    }
-
-    // ================= EVENTOS DEL SERVIDOR =================
     socket.on('sala-creada', (data) => {
-        codigoSala = data.codigo;
-        miId = socket.id;
+        codigoSala = data.codigo; miId = socket.id;
         document.getElementById('seccion-crear').style.display = 'none';
         document.getElementById('seccion-sala').style.display = 'block';
         document.getElementById('codigo-sala-display').innerText = codigoSala;
         actualizarListaLobby([data]);
     });
-
     socket.on('jugador-unido', (data) => {
         if (document.getElementById('seccion-sala').style.display !== 'none') {
             actualizarListaLobby(data.jugadores);
             document.getElementById('btn-iniciar').disabled = data.jugadores.length < 2;
         }
     });
-
-    socket.on('error-sala', (msg) => {
-        mostrarError(msg);
-    });
-
+    socket.on('error-sala', (msg) => mostrarError(msg));
     socket.on('partida-iniciada', (data) => {
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('pantalla-juego').style.display = 'flex';
@@ -246,19 +158,14 @@
 
     socket.on('resultado-tirada', (data) => {
         bloqueo = false;
-        if (data.puntos === 0) {
-            document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
-            document.getElementById('btn-tirar').disabled = true;
-            document.getElementById('btn-plantar').disabled = true;
-            setTimeout(() => socket.emit('perder-turno', codigoSala), 1500);
-            return;
-        }
-
-        puntosTurno += data.puntos;
+        puntosTurno = data.puntosTurno;
         document.getElementById('pts-turno').innerText = puntosTurno;
-        document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
-        
-        animarDadosServidor(data.dados);
+
+        limpiarZonaActiva();
+        animarDadosServidor(data.dados, data.dadosQuePuntuan);
+
+        if (data.mesaLimpia) document.getElementById('anuncio').innerText = "¡MESA LIMPIA! Tiras de nuevo con 5";
+        else document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
 
         if (esMiTurno) {
             document.getElementById('btn-tirar').disabled = false;
@@ -269,14 +176,15 @@
         }
     });
 
-    socket.on('victoria-instantanea', (data) => {
-        mostrarGanador(data.ganador);
+    socket.on('tirada-cero', (data) => {
+        document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada. Pierde turno.</b>`;
+        document.getElementById('btn-tirar').disabled = true;
+        document.getElementById('btn-plantar').disabled = true;
     });
 
-    socket.on('partida-terminada', (data) => {
-        mostrarGanador(data.ganador);
-    });
-
+    socket.on('victoria-instantanea', (data) => mostrarGanador(data.ganador));
+    socket.on('partida-terminada', (data) => mostrarGanador(data.ganador));
+    
     socket.on('cambiar-turno', (data) => {
         jugadores = data.jugadores;
         renderizarMarcador();
@@ -287,11 +195,6 @@
         document.getElementById('anuncio').innerText = `Turno de ${data.jugador}`;
     });
 
-    socket.on('turno-perdido', (data) => {
-        document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada.</b>`;
-    });
-
-    // ================= LÓGICA DE JUEGO (CLIENTE) =================
     function enviarTirada() {
         if (!esMiTurno || bloqueo) return;
         bloqueo = true;
@@ -299,10 +202,8 @@
         document.getElementById('btn-plantar').disabled = true;
         document.getElementById('anuncio').innerText = "Tirando...";
         limpiarZonaActiva();
-        
         const cubilete = document.getElementById('cubilete');
         cubilete.classList.remove('anim-lanzar'); void cubilete.offsetWidth; cubilete.classList.add('anim-lanzar');
-        
         socket.emit('tirar-dados', codigoSala);
     }
 
@@ -317,12 +218,10 @@
     function actualizarTurnoUI(turnoIdx) {
         const jugadorTurno = jugadores[turnoIdx];
         esMiTurno = (jugadorTurno.id === miId);
-        
         document.querySelectorAll('.jugador-box').forEach((box, idx) => {
             if (idx === turnoIdx) box.classList.add('activo');
             else box.classList.remove('activo');
         });
-
         if (esMiTurno) {
             document.getElementById('btn-tirar').disabled = false;
             document.getElementById('anuncio').innerText = "¡Es tu turno! Tira los dados.";
@@ -336,54 +235,47 @@
         const grid = document.getElementById('grid-jugadores');
         grid.innerHTML = "";
         jugadores.forEach((j, i) => {
-            grid.innerHTML += `
-                <div class="jugador-box" id="j-box-${i}">
-                    <div class="label-jugador">${j.nombre}</div>
-                    <div class="pts-t">${j.puntos}</div>
-                </div>`;
+            grid.innerHTML += `<div class="jugador-box" id="j-box-${i}"><div class="label-jugador">${j.nombre}</div><div class="pts-t">${j.puntos}</div></div>`;
         });
     }
-
     function actualizarListaLobby(jugadores) {
         const lista = document.getElementById('lista-jugadores');
         lista.innerHTML = '';
-        jugadores.forEach(j => {
-            lista.innerHTML += `<li>👤 ${j.nombre}</li>`;
-        });
+        jugadores.forEach(j => lista.innerHTML += `<li>👤 ${j.nombre}</li>`);
     }
 
-    // ================= VISUAL (Dados y Animaciones) =================
-    function limpiarZonaActiva() {
-        document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
-    }
-    function limpiarMesa() {
-        limpiarZonaActiva();
-        document.getElementById('reserva').innerHTML = "";
-    }
+    function limpiarZonaActiva() { document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); }
+    function limpiarMesa() { limpiarZonaActiva(); document.getElementById('reserva').innerHTML = ""; }
 
-    function animarDadosServidor(indices) {
+    function animarDadosServidor(dados, dadosQuePuntuan) {
         const zona = document.getElementById('zona-tiro');
-        indices.forEach((idx, i) => {
+        const reserva = document.getElementById('reserva');
+        let pendientes = [...dadosQuePuntuan];
+
+        dados.forEach((idx, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
             d.innerHTML = CARAS[idx].html;
             const x = Math.random() * (zona.offsetWidth - 70) + 5;
             const y = Math.random() * (zona.offsetHeight - 70) + 5;
-            d.style.left = x + "px";
-            d.style.top = y + "px";
+            d.style.left = x + "px"; d.style.top = y + "px";
             zona.appendChild(d);
-            setTimeout(() => { 
-                d.classList.add('visible'); 
-                d.style.transform = `rotate(${Math.random()*60-30}deg)`; 
-                setTimeout(() => {
+            
+            setTimeout(() => {
+                d.classList.add('visible');
+                const scoringIndex = pendientes.indexOf(idx);
+                if (scoringIndex !== -1) {
                     d.classList.add('puntuando');
+                    pendientes.splice(scoringIndex, 1);
                     setTimeout(() => {
                         d.classList.replace('puntuando', 'reservado');
-                        document.getElementById('reserva').appendChild(d);
+                        reserva.appendChild(d);
                         d.style.position = 'static';
-                    }, 500);
-                }, 500);
-            }, i*100);
+                    }, 800);
+                } else {
+                    setTimeout(() => { d.style.opacity = '0.2'; d.style.transform = 'scale(0.5)'; }, 800);
+                }
+            }, i * 100);
         });
     }
 
