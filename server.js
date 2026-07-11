@@ -105,7 +105,7 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // FIX: Si saca 0 puntos, enviamos los dados primero para que se vean, y luego cambiamos el turno
+        // Si saca 0 puntos, enviamos los dados primero para que se vean, y luego cambiamos el turno
         if (resultado.puntos === 0) {
             io.to(codigo).emit('resultado-tirada', {
                 dados,
@@ -116,10 +116,11 @@ io.on('connection', (socket) => {
                 mesaLimpia: false
             });
             
+            // Esperamos 5 segundos (5000 ms) para que se vean los dados antes de cambiar turno
             setTimeout(() => {
                 io.to(codigo).emit('tirada-cero', { jugador: sala.jugadores[sala.turno].nombre });
                 cambiarTurno(sala, codigo);
-            }, 2000); // Espera 2 segundos para que se vean los dados
+            }, 5000); 
             return;
         }
 
