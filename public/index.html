@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>5.000 - MULTIJUGADOR ONLINE</title>
-    <!-- Cargamos Socket.io desde el CDN -->
+    <!-- Cargamos Socket.io desde el servidor -->
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { --gold: #ffd700; --neon-green: #39ff14; --danger: #ff4444; --metal: #a8a8a8; }
@@ -37,10 +37,10 @@
             font-size: 24px; color: var(--neon-green); margin: 15px 0; letter-spacing: 2px;
             background: #000; padding: 10px; border-radius: 10px; border: 1px dashed var(--neon-green);
         }
-        .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; }
+        .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; list-style: none; }
         .lista-jugadores-lobby li { margin-bottom: 5px; color: #ccc; }
 
-        /* ================= JUEGO (Estilos originales adaptados) ================= */
+        /* ================= JUEGO ================= */
         #pantalla-juego { display: none; width: 100%; height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
         
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
@@ -102,12 +102,14 @@
             
             <div id="seccion-crear">
                 <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
+                <button class="btn-lobby" style="border-color: #888; color: #888; font-size: 12px; margin-top: 5px;" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
 
             <div id="seccion-unirse" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
                 <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
+                <button class="btn-lobby" style="border-color: #888; color: #888; font-size: 12px; margin-top: 5px;" onclick="mostrarCrear()">️ VOLVER</button>
             </div>
 
             <div id="seccion-sala" style="display:none;">
@@ -115,10 +117,10 @@
                 <div id="codigo-sala-display"></div>
                 <ul id="lista-jugadores" class="lista-jugadores-lobby"></ul>
                 <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
-                <button class="btn-lobby" style="border-color: var(--danger); color: var(--danger); font-size: 12px;" onclick="location.reload()"> CANCELAR</button>
+                <button class="btn-lobby" style="border-color: var(--danger); color: var(--danger); font-size: 12px;" onclick="location.reload()">❌ CANCELAR</button>
             </div>
             
-            <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
+            <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px; min-height: 20px;"></div>
         </div>
     </div>
 
@@ -144,7 +146,7 @@
     <!-- ================= MODAL GANADOR ================= -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2> ¡GANADOR!</h2>
+            <h2>🏆 ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
@@ -152,16 +154,14 @@
 
 <script>
     // ================= CONEXIÓN AL SERVIDOR =================
-    // Al estar en el mismo dominio, socket.io se conecta solo a la URL actual
     const socket = io(); 
     
     let miId = socket.id;
     let codigoSala = '';
     let miNombre = '';
     let esMiTurno = false;
-    let jugadores = []; // {id, nombre, puntos}
+    let jugadores = []; 
     
-    // Estado del turno actual
     let puntosTurno = 0;
     let dadosActivos = 5;
     let bloqueo = false;
@@ -194,6 +194,18 @@
         socket.emit('iniciar-partida', codigoSala);
     }
 
+    function mostrarUnirse() {
+        document.getElementById('seccion-crear').style.display = 'none';
+        document.getElementById('seccion-unirse').style.display = 'block';
+        document.getElementById('mensaje-error').innerText = '';
+    }
+
+    function mostrarCrear() {
+        document.getElementById('seccion-unirse').style.display = 'none';
+        document.getElementById('seccion-crear').style.display = 'block';
+        document.getElementById('mensaje-error').innerText = '';
+    }
+
     function mostrarError(msg) {
         document.getElementById('mensaje-error').innerText = msg;
         setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000);
@@ -202,7 +214,7 @@
     // ================= EVENTOS DEL SERVIDOR =================
     socket.on('sala-creada', (data) => {
         codigoSala = data.codigo;
-        miId = socket.id; // Guardamos nuestro ID
+        miId = socket.id;
         document.getElementById('seccion-crear').style.display = 'none';
         document.getElementById('seccion-sala').style.display = 'block';
         document.getElementById('codigo-sala-display').innerText = codigoSala;
@@ -210,7 +222,6 @@
     });
 
     socket.on('jugador-unido', (data) => {
-        // data.jugadores es la lista actualizada
         if (document.getElementById('seccion-sala').style.display !== 'none') {
             actualizarListaLobby(data.jugadores);
             document.getElementById('btn-iniciar').disabled = data.jugadores.length < 2;
@@ -235,7 +246,6 @@
             document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
             document.getElementById('btn-tirar').disabled = true;
             document.getElementById('btn-plantar').disabled = true;
-            // Avisamos al servidor que perdemos el turno para que pase al siguiente
             setTimeout(() => socket.emit('perder-turno', codigoSala), 1500);
             return;
         }
@@ -244,13 +254,10 @@
         document.getElementById('pts-turno').innerText = puntosTurno;
         document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
         
-        // Animar dados (simplificado para online)
         animarDadosServidor(data.dados);
 
-        // Habilitar botones si es mi turno
         if (esMiTurno) {
             document.getElementById('btn-tirar').disabled = false;
-            // Validar si puede plantarse (lógica visual, el servidor valida al final)
             const jugadorActual = jugadores.find(j => j.id === miId);
             let min = (jugadorActual && jugadorActual.puntos >= 4000) ? 100 : 300;
             let puedePlantar = (puntosTurno >= min) && (puntosTurno % 100 === 0) && (jugadorActual.puntos + puntosTurno <= 5000);
@@ -341,7 +348,7 @@
         });
     }
 
-    // ================= VISUAL (Dados y Animaciones) =================
+    // ================= VISUAL =================
     function limpiarZonaActiva() {
         document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
     }
@@ -356,7 +363,6 @@
             const d = document.createElement('div');
             d.className = 'dado';
             d.innerHTML = CARAS[idx].html;
-            // Posición aleatoria simple
             const x = Math.random() * (zona.offsetWidth - 70) + 5;
             const y = Math.random() * (zona.offsetHeight - 70) + 5;
             d.style.left = x + "px";
@@ -365,7 +371,6 @@
             setTimeout(() => { 
                 d.classList.add('visible'); 
                 d.style.transform = `rotate(${Math.random()*60-30}deg)`; 
-                // Simular reserva visual
                 setTimeout(() => {
                     d.classList.add('puntuando');
                     setTimeout(() => {
