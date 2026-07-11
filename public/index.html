@@ -20,7 +20,7 @@
         @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
 
         /* LOBBY */
-        #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .lobby-box h1 { color: var(--gold); margin-bottom: 20px; font-size: 28px; }
         .input-lobby { width: 80%; padding: 12px; margin: 10px 0; background: #222; border: 2px solid #555; color: white; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
@@ -85,7 +85,7 @@
     </div>
 
     <!-- LOBBY -->
-    <div id="lobby" style="display:none;">
+    <div id="lobby">
         <div class="lobby-box">
             <h1>🎲 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
@@ -130,7 +130,7 @@
     <!-- MODAL GANADOR -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2>🏆 ¡GANADOR!</h2>
+            <h2> ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
@@ -227,7 +227,7 @@
         if (data.mesaLimpia) {
             document.getElementById('anuncio').innerText = "¡MESA LIMPIA! Tiras de nuevo con 5";
             decir("¡Mesa limpia!");
-            setTimeout(() => limpiarMesa(), 1000); // Limpiar reserva visualmente tras mesa limpia
+            setTimeout(() => limpiarMesa(), 1000);
         } else {
             document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
         }
@@ -318,10 +318,14 @@
     function limpiarZonaActiva() { document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); }
     function limpiarMesa() { limpiarZonaActiva(); document.getElementById('reserva').innerHTML = ""; }
 
+    // FIX: Función corregida para eliminar completamente los dados que no puntúan
     function animarDadosServidor(dados, dadosQuePuntuan) {
         const zona = document.getElementById('zona-tiro');
         const reserva = document.getElementById('reserva');
         let pendientes = [...dadosQuePuntuan];
+
+        // Primero limpiamos cualquier dado residual que hubiera quedado
+        limpiarZonaActiva();
 
         dados.forEach((idx, i) => {
             const d = document.createElement('div');
@@ -336,6 +340,7 @@
                 d.classList.add('visible');
                 const scoringIndex = pendientes.indexOf(idx);
                 if (scoringIndex !== -1) {
+                    // Dado que puntúa: se mueve a la reserva
                     d.classList.add('puntuando');
                     pendientes.splice(scoringIndex, 1);
                     setTimeout(() => {
@@ -344,7 +349,14 @@
                         d.style.position = 'static';
                     }, 800);
                 } else {
-                    setTimeout(() => { d.style.opacity = '0.2'; d.style.transform = 'scale(0.5)'; }, 800);
+                    // Dado que NO puntúa: se muestra brevemente y se ELIMINA del DOM
+                    setTimeout(() => {
+                        d.style.transition = 'opacity 0.5s, transform 0.5s';
+                        d.style.opacity = '0';
+                        d.style.transform = 'scale(0.3)';
+                        // Eliminar completamente después de la animación
+                        setTimeout(() => { if (d.parentNode) d.remove(); }, 500);
+                    }, 1000);
                 }
             }, i * 100);
         });
