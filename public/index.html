@@ -2,87 +2,47 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>5.000 - PERFECT LIMITS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5.000 - MULTIJUGADOR ONLINE</title>
+    <!-- Cargamos Socket.io desde el CDN -->
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { --gold: #ffd700; --neon-green: #39ff14; --danger: #ff4444; --metal: #a8a8a8; }
         html, body { overflow: hidden; height: 100dvh; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; touch-action: none; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
-        /* ================= PANTALLA DE CARGA ================= */
-        #pantalla-carga {
+        /* ================= LOBBY ================= */
+        #lobby {
             position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-            background: #050505; z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-            padding-bottom: 8vh; box-sizing: border-box; transition: opacity 0.8s ease;
+            background: #050505; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        #pantalla-carga.oculto { opacity: 0; pointer-events: none; }
-        .portada-img {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('portada.png') center/contain no-repeat #050505; z-index: -1;
+        .lobby-box {
+            background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px;
+            text-align: center; width: min(92vw, 420px);
         }
-        @media (max-width: 768px) {
-            .portada-img { top: 1.8vmin; left: 1.8vmin; width: calc(100% - 3.6vmin); height: calc(100% - 3.6vmin); }
+        .lobby-box h1 { color: var(--gold); margin-bottom: 20px; }
+        .input-lobby {
+            width: 80%; padding: 12px; margin: 10px 0; background: #222; border: 2px solid #555;
+            color: white; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif;
         }
-        .contenedor-ui-carga { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .barra-carga-contenedor {
-            width: min(85%, 400px); height: 14px; background: rgba(0,0,0,0.7);
-            border-radius: 12px; overflow: visible; border: 2px solid var(--gold);
-            box-shadow: 0 0 20px rgba(255,215,0,0.3); position: relative;
+        .input-lobby:focus { border-color: var(--gold); outline: none; }
+        .btn-lobby {
+            width: 80%; margin: 10px 0; padding: 12px; font-size: 16px; font-weight: bold;
+            border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer;
         }
-        .barra-carga-relleno {
-            height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
-            box-shadow: 0 0 15px var(--gold); border-radius: 10px;
-            transition: width 6s cubic-bezier(0.25, 1, 0.5, 1); position: relative;
+        .btn-lobby:hover { background: rgba(255, 215, 0, 0.1); }
+        .btn-lobby:disabled { opacity: 0.5; cursor: not-allowed; }
+        #codigo-sala-display {
+            font-size: 24px; color: var(--neon-green); margin: 15px 0; letter-spacing: 2px;
+            background: #000; padding: 10px; border-radius: 10px; border: 1px dashed var(--neon-green);
         }
-        .texto-carga {
-            color: var(--gold); font-family: 'Arial Black', sans-serif; font-size: 15px;
-            margin-top: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px;
-            animation: parpadeo 1.2s infinite alternate;
-        }
-        @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
-        .chispa {
-            position: absolute; width: 5px; height: 5px; background: #fff;
-            border-radius: 50%; box-shadow: 0 0 6px var(--gold), 0 0 12px var(--gold);
-            pointer-events: none; animation: volarChispa 0.7s ease-out forwards;
-        }
-        @keyframes volarChispa {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-        }
-        /* =================================================== */
+        .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; }
+        .lista-jugadores-lobby li { margin-bottom: 5px; color: #ccc; }
 
-        /* ================= MODAL GANADOR ================= */
-        #modal-ganador {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-            background: rgba(0,0,0,0.92); z-index: 15000;
-            display: none; align-items: center; justify-content: center;
-            animation: fadeIn 0.5s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-ganador-contenido {
-            background: #111; border: 3px solid var(--gold); border-radius: 20px;
-            padding: 30px; text-align: center; max-width: 90%; width: 400px;
-            box-shadow: 0 0 40px rgba(255,215,0,0.4);
-        }
-        .modal-ganador-contenido h2 { color: var(--gold); font-size: 24px; margin-bottom: 15px; }
-        .nombre-ganador { color: #fff; font-size: 28px; font-weight: bold; margin: 20px 0; text-shadow: 0 2px 8px rgba(255,215,0,0.5); }
-        .btn-jugar-otra {
-            background: var(--gold); color: #000; border: none; padding: 12px 25px;
-            font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 4px 0 #b8860b; transition: transform 0.1s;
-        }
-        .btn-jugar-otra:active { transform: translateY(4px); box-shadow: none; }
-        /* =================================================== */
-
-        #pantalla-inicio { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .selector-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
-        .btn-jugador { width: 60px; height: 60px; margin: 10px; font-size: 24px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
-        .btn-opcion { width: 100%; margin: 8px 0; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 12px; border: 2px solid var(--gold); background: transparent; color: white; cursor: pointer; }
-        .grid-inputs { display: grid; gap: 10px; margin-bottom: 10px; }
-        .input-nombre { background: #222; border: 2px solid #555; color: white; padding: 10px; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
-        .input-nombre:focus { border-color: var(--gold); outline: none; }
-
+        /* ================= JUEGO (Estilos originales adaptados) ================= */
+        #pantalla-juego { display: none; width: 100%; height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+        
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
         .jugador-box { background: rgba(255,255,255,0.03); padding: 10px 5px; border-radius: 12px; border: 1px solid #333; transition: all 0.3s ease; }
@@ -113,399 +73,315 @@
         .btn-plantar { background: #eee; color: #000; box-shadow: 0 5px 0 #999; }
         button:disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
 
-        #modal-instrucciones { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0,0,0,0.85); z-index: 3000; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        #modal-instrucciones.activo { display: flex; }
-        .modal-box { background: #111; border: 3px solid var(--gold); border-radius: 20px; padding: 25px; max-width: 450px; width: 100%; max-height: 90dvh; overflow-y: auto; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); position: relative; color: white; }
-        .modal-box h2 { margin: 0 0 10px; color: #aaa; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
-        .modal-box h1 { margin: 0 0 15px; color: var(--gold); font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .seccion-modal { text-align: left; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
-        .seccion-modal:last-child { border-bottom: none; margin-bottom: 20px; }
-        .titulo-seccion { font-size: 16px; color: var(--gold); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-family: 'Arial Black', sans-serif; }
-        .texto-modal { font-size: 13px; color: #ddd; line-height: 1.4; font-family: 'Arial', sans-serif; }
-        .texto-modal b { color: #fff; }
-        .aviso-modal { color: var(--neon-green); font-weight: bold; font-size: 12px; margin-top: 4px; display: block; font-family: 'Arial', sans-serif; }
-        .peligro-modal { color: var(--danger); }
-        .grid-dados-modal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
-        .carta-dado-modal { background: #222; border-radius: 8px; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #444; }
-        .carta-dado-modal span { font-size: 11px; color: #888; margin-top: 3px; font-family: 'Arial', sans-serif; }
-        .dado-preview { width: 40px; height: 40px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .btn-modal { background: var(--gold); color: #000; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 0 #b8860b; transition: transform 0.1s; width: 100%; font-family: 'Arial Black', sans-serif; }
-        .btn-modal:active { transform: translateY(4px); box-shadow: none; }
-        .btn-abrir-modal { width: 100%; margin-top: 15px; background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 10px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        .btn-fullscreen { width: 100%; margin-top: 10px; background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 10px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: bold; }
-        ul.modal-list, ol.modal-list { list-style: none; padding: 0; margin: 5px 0; }
-        ul.modal-list li, ol.modal-list li { margin-bottom: 5px; position: relative; padding-left: 15px; font-family: 'Arial', sans-serif; font-size: 13px; color: #ddd; }
-        ul.modal-list li::before { content: "•"; color: var(--gold); position: absolute; left: 0; font-size: 16px; top: -2px; }
-        ol.modal-list { padding-left: 20px; counter-reset: item; }
-        ol.modal-list li { counter-increment: item; }
-        ol.modal-list li::before { content: counter(item) "."; color: var(--gold); position: absolute; left: 0; font-size: 14px; }
-        .inline-dado { display: inline-flex; width: 18px; height: 18px; background: white; border-radius: 4px; margin-right: 5px; vertical-align: middle; align-items: center; justify-content: center; }
+        /* ================= MODAL GANADOR ================= */
+        #modal-ganador {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+            background: rgba(0,0,0,0.92); z-index: 15000;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-ganador-contenido {
+            background: #111; border: 3px solid var(--gold); border-radius: 20px;
+            padding: 30px; text-align: center; max-width: 90%; width: 400px;
+            box-shadow: 0 0 40px rgba(255,215,0,0.4);
+        }
+        .modal-ganador-contenido h2 { color: var(--gold); font-size: 24px; margin-bottom: 15px; }
+        .nombre-ganador { color: #fff; font-size: 28px; font-weight: bold; margin: 20px 0; }
+        .btn-jugar-otra {
+            background: var(--gold); color: #000; border: none; padding: 12px 25px;
+            font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <!-- ================= PANTALLA DE CARGA ================= -->
-    <div id="pantalla-carga">
-        <div class="portada-img"></div>
-        <div class="contenedor-ui-carga">
-            <div class="barra-carga-contenedor">
-                <div class="barra-carga-relleno" id="barra-relleno"></div>
-            </div>
-            <div class="texto-carga">Cargando...</div>
-        </div>
-    </div>
-    <!-- =================================================== -->
 
-    <div id="pantalla-inicio">
-        <div class="selector-box">
-            <h1 style="color:var(--gold);">5.000 PRO</h1>
-            <p>Selecciona jugadores</p>
-            <div id="botones-inicio"></div>
-            <div id="opciones-inicio" style="display:none; margin-top:15px;">
-                <button class="btn-opcion" onclick="juegoRapido()"> JUEGO RÁPIDO</button>
-                <button class="btn-opcion" onclick="pedirNombres()">✏️ PONER NOMBRES</button>
+    <!-- ================= LOBBY ================= -->
+    <div id="lobby">
+        <div class="lobby-box">
+            <h1>🎲 5.000 ONLINE</h1>
+            <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
+            
+            <div id="seccion-crear">
+                <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
             </div>
-            <div id="inputs-nombres" style="display:none; margin-top:15px;">
-                <div id="grid-inputs" class="grid-inputs"></div>
-                <button class="btn-opcion" style="margin-top:10px; border-color: var(--neon-green); color: var(--neon-green);" onclick="confirmarNombres()">▶️ COMENZAR</button>
-            </div>
-            <button class="btn-abrir-modal" onclick="abrirModal()">📖 INSTRUCCIONES</button>
-            <button class="btn-fullscreen" onclick="toggleFullscreen()">🖥️ PANTALLA COMPLETA</button>
-        </div>
-    </div>
 
-    <div id="modal-instrucciones">
-        <div class="modal-box">
-            <h2>Instrucciones</h2><h1>🎲 5.000</h1>
-            <div class="seccion-modal"><div class="titulo-seccion">🎯 Objetivo</div><div class="texto-modal">Gana quien llegue a <b>5.000 puntos exactos</b>.</div></div>
-            <div class="seccion-modal"><div class="titulo-seccion">💰 ¿Qué puntúa?</div><ul class="modal-list" style="padding-left:15px; margin-bottom:8px;"><li><span class="inline-dado"><div style="width:10px;height:10px;background:red;border-radius:50%;"></div></span> <b>1 </b> (100 pts)</li><li><span class="inline-dado"><b style="font-size:12px; color:red;">K</b></span> <b>K 🔴</b> (50 pts)</li></ul><div class="texto-modal" style="text-align:center; color:#aaa; font-size:11px; margin-bottom:6px;">Cualquier trío (3+ iguales):</div><div class="grid-dados-modal"><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div></div></div><span>3 Negros = 100</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div></div></div><span>3 Rojos = 200</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">J</b></div><span>3 J = 300</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">Q</b></div><span>3 Q = 400</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:red">K</b></div><span>3 K = 500</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="width:18px; height:18px; background:red; border-radius:50%;"></div></div><span>3 Ases = 1000</span></div></div></div>
-            <div class="seccion-modal"><div class="titulo-seccion">🔄 En tu turno:</div><ol class="modal-list"><li>Tira</li><li>Los que puntúan se reservan</li><li>¿Te plantas o arriesgas?</li></ol><div class="aviso-modal">4. No puedes plantarte con valores sueltos (ej. 50 o 350). Tiene que ser número redondo.</div></div>
-            <div class="seccion-modal"><div class="titulo-seccion">️ Ojo:</div><ul class="modal-list"><li>Sin puntos en la tirada → <span class="peligro-modal">pierdes turno</span></li><li>Todos puntúan → <b style="color:var(--neon-green)">tiras de nuevo con 5</b></li><li>Para plantarte: <b>300 pts</b> (mínimo)</li><li>A partir de 4000 puedes plantarte con un mínimo de 100, debes llegar a 5000</li><li class="peligro-modal">¡No superes 5.000!</li><li style="color: var(--gold); font-weight: bold; margin-top: 5px;"> 5 Ases en una tirada = ¡Victoria instantánea!</li></ul></div>
-            <button class="btn-modal" onclick="cerrarModal()">[ ✅ ENTENDIDO ]</button>
+            <div id="seccion-unirse" style="display:none;">
+                <p style="color:#aaa; font-size:12px;">Código de sala:</p>
+                <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
+                <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
+            </div>
+
+            <div id="seccion-sala" style="display:none;">
+                <p style="color:#aaa; font-size:12px;">Código de tu sala (compártelo):</p>
+                <div id="codigo-sala-display"></div>
+                <ul id="lista-jugadores" class="lista-jugadores-lobby"></ul>
+                <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
+                <button class="btn-lobby" style="border-color: var(--danger); color: var(--danger); font-size: 12px;" onclick="location.reload()"> CANCELAR</button>
+            </div>
+            
+            <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
         </div>
     </div>
 
-    <div class="panel-superior">
-        <div id="grid-jugadores" class="grid-jugadores"></div>
-        <div class="marcador-turno"><span id="pts-turno" class="val-turno">0</span></div>
-        <div id="anuncio">¡Buena suerte!</div>
-    </div>
+    <!-- ================= PANTALLA DE JUEGO ================= -->
+    <div id="pantalla-juego">
+        <div class="panel-superior">
+            <div id="grid-jugadores" class="grid-jugadores"></div>
+            <div class="marcador-turno"><span id="pts-turno" class="val-turno">0</span></div>
+            <div id="anuncio">Esperando...</div>
+        </div>
 
-    <div class="fieltro">
-        <div id="reserva" class="zona-reserva"></div>
-        <div id="zona-tiro" class="zona-tiro"><div id="cubilete"></div></div>
-    </div>
+        <div class="fieltro">
+            <div id="reserva" class="zona-reserva"></div>
+            <div id="zona-tiro" class="zona-tiro"><div id="cubilete"></div></div>
+        </div>
 
-    <div class="controles">
-        <button id="btn-plantar" class="btn-plantar" onclick="plantarse()" disabled>PLANTARSE</button>
-        <button id="btn-tirar" class="btn-tirar" onclick="tirar()">¡TIRAR!</button>
+        <div class="controles">
+            <button id="btn-plantar" class="btn-plantar" onclick="enviarPlantarse()" disabled>PLANTARSE</button>
+            <button id="btn-tirar" class="btn-tirar" onclick="enviarTirada()" disabled>¡TIRAR!</button>
+        </div>
     </div>
 
     <!-- ================= MODAL GANADOR ================= -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2>🏆 ¡GANADOR!</h2>
+            <h2> ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
-            <button class="btn-jugar-otra" onclick="location.reload()">🔄 JUGAR OTRA PARTIDA</button>
+            <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
     </div>
-    <!-- =================================================== -->
 
 <script>
-    const sonidoCubilete = new Audio('cubilete.ogg'); 
+    // ================= CONEXIÓN AL SERVIDOR =================
+    // Al estar en el mismo dominio, socket.io se conecta solo a la URL actual
+    const socket = io(); 
+    
+    let miId = socket.id;
+    let codigoSala = '';
+    let miNombre = '';
+    let esMiTurno = false;
+    let jugadores = []; // {id, nombre, puntos}
+    
+    // Estado del turno actual
+    let puntosTurno = 0;
+    let dadosActivos = 5;
+    let bloqueo = false;
+
     const CARAS = [
-        { id: 0, valTrio: 100, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
-        { id: 1, valTrio: 200, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
-        { id: 2, valTrio: 300, html: '<b style="font-size:32px; color:#222">J</b>' },
-        { id: 3, valTrio: 400, html: '<b style="font-size:32px; color:#222">Q</b>' },
-        { id: 4, valTrio: 500, valInd: 50, html: '<b style="font-size:32px; color:red">K</b>' },
-        { id: 5, valTrio: 1000, valInd: 100, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
+        { id: 0, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
+        { id: 1, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
+        { id: 2, html: '<b style="font-size:32px; color:#222">J</b>' },
+        { id: 3, html: '<b style="font-size:32px; color:#222">Q</b>' },
+        { id: 4, html: '<b style="font-size:32px; color:red">K</b>' },
+        { id: 5, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
     ];
 
-    let jugadores = [], turnoIdx = 0, puntosTurno = 0, dadosActivos = 5, numJugadores = 0;
-    let tempNumJugadores = 0, posicionesDados = [];
-    let bloqueo = false;
-    const frasesCero = ["¡Cero Patatero!", "¡Una Mierda para ti!", "¡Nada de nada!", "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"];
-
-    function decir(texto, opciones = {}) {
-        if (!texto) return;
-        const msg = new SpeechSynthesisUtterance(texto);
-        msg.lang = 'es-ES'; msg.pitch = opciones.pitch || 1; msg.rate = opciones.rate || 0.95; msg.volume = 1;
-        window.speechSynthesis.speak(msg);
+    // ================= FUNCIONES DEL LOBBY =================
+    function crearSala() {
+        miNombre = document.getElementById('input-nombre').value.trim();
+        if (!miNombre) return mostrarError("Pon un nombre");
+        socket.emit('crear-sala', miNombre);
     }
 
-    function limpiarZonaActiva() {
-        document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
-        posicionesDados = [];
+    function unirseSala() {
+        miNombre = document.getElementById('input-nombre').value.trim();
+        codigoSala = document.getElementById('input-codigo').value.trim().toUpperCase();
+        if (!miNombre) return mostrarError("Pon un nombre");
+        if (!codigoSala) return mostrarError("Pon un código");
+        socket.emit('unirse-sala', { codigo: codigoSala, nombre: miNombre });
     }
-    function limpiarTodo() {
-        document.querySelectorAll('.dado').forEach(d => d.remove());
-        document.getElementById('reserva').innerHTML = "";
-        posicionesDados = [];
-    }
-
-    const containerBtns = document.getElementById('botones-inicio');
-    for(let i=2; i<=6; i++) containerBtns.innerHTML += `<button class="btn-jugador" onclick="seleccionarCantidad(${i})">${i}</button>`;
-
-    function seleccionarCantidad(n) { tempNumJugadores = n; document.getElementById('opciones-inicio').style.display = 'block'; document.getElementById('botones-inicio').style.display = 'none'; }
-    function juegoRapido() { jugadores = []; for(let i=0; i<tempNumJugadores; i++) jugadores.push({ nombre: "Jugador " + (i+1), puntos: 0 }); iniciarPartida(); }
-    function pedirNombres() { const grid = document.getElementById('grid-inputs'); grid.innerHTML = ''; for(let i=0; i<tempNumJugadores; i++) grid.innerHTML += `<input type="text" class="input-nombre" maxlength="10" placeholder="Jugador ${i+1}" autocomplete="off">`; document.getElementById('inputs-nombres').style.display = 'block'; document.getElementById('opciones-inicio').style.display = 'none'; }
-    function confirmarNombres() { jugadores = []; document.querySelectorAll('.input-nombre').forEach((inp, i) => { let nombre = inp.value.trim(); if (!nombre) nombre = "Jugador " + (i+1); jugadores.push({ nombre: nombre, puntos: 0 }); }); iniciarPartida(); }
 
     function iniciarPartida() {
-        numJugadores = jugadores.length; turnoIdx = 0; puntosTurno = 0; dadosActivos = 5; bloqueo = false;
-        document.getElementById('pantalla-inicio').style.display = 'none';
-        const grid = document.getElementById('grid-jugadores'); grid.innerHTML = "";
-        for(let i=0; i<numJugadores; i++) grid.innerHTML += `<div id="j-box-${i}" class="jugador-box ${i===0?'activo':''}"><div class="label-jugador">${jugadores[i].nombre}</div><div id="j-pts-${i}" class="pts-t">0</div></div>`;
-        limpiarTodo();
-        decir("Empieza el juego. Suerte.");
-        setTimeout(() => decir(`Turno de ${jugadores[0].nombre}`), 600);
-        document.getElementById('anuncio').innerText = `Turno ${jugadores[0].nombre}`;
-        actualizarBotones();
+        socket.emit('iniciar-partida', codigoSala);
     }
 
-    function obtenerPosicionSegura() {
-        const zona = document.getElementById('zona-tiro'), dadoSize = 60, margen = 15;
-        const maxX = zona.offsetWidth - dadoSize - margen, maxY = zona.offsetHeight - dadoSize - margen;
-        for(let i=0; i<100; i++) {
-            let x = Math.random() * (maxX - margen) + margen, y = Math.random() * (maxY - margen) + margen;
-            if (!posicionesDados.some(p => Math.hypot(x - p.x, y - p.y) < 68)) return {x, y};
+    function mostrarError(msg) {
+        document.getElementById('mensaje-error').innerText = msg;
+        setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000);
+    }
+
+    // ================= EVENTOS DEL SERVIDOR =================
+    socket.on('sala-creada', (data) => {
+        codigoSala = data.codigo;
+        miId = socket.id; // Guardamos nuestro ID
+        document.getElementById('seccion-crear').style.display = 'none';
+        document.getElementById('seccion-sala').style.display = 'block';
+        document.getElementById('codigo-sala-display').innerText = codigoSala;
+        actualizarListaLobby([data]);
+    });
+
+    socket.on('jugador-unido', (data) => {
+        // data.jugadores es la lista actualizada
+        if (document.getElementById('seccion-sala').style.display !== 'none') {
+            actualizarListaLobby(data.jugadores);
+            document.getElementById('btn-iniciar').disabled = data.jugadores.length < 2;
         }
-        return {x: margen, y: margen};
-    }
+    });
 
-    function tirar() {
-        if (bloqueo) return;
-        bloqueo = true;
-        limpiarZonaActiva();
-        if (dadosActivos === 0 || dadosActivos > 5) dadosActivos = 5;
-        
-        const cubilete = document.getElementById('cubilete');
-        sonidoCubilete.currentTime = 0; sonidoCubilete.play().catch(() => {});
-        cubilete.classList.remove('anim-lanzar'); void cubilete.offsetWidth; cubilete.classList.add('anim-lanzar');
-        
-        document.getElementById('btn-tirar').disabled = true;
-        document.getElementById('btn-plantar').disabled = true;
+    socket.on('error-sala', (msg) => {
+        mostrarError(msg);
+    });
 
-        setTimeout(() => {
-            let res = Array.from({length: dadosActivos}, () => Math.floor(Math.random()*6));
-            resolverTirada(res);
-        }, 1100);
-    }
+    socket.on('partida-iniciada', (data) => {
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('pantalla-juego').style.display = 'flex';
+        jugadores = data.jugadores;
+        renderizarMarcador();
+        actualizarTurnoUI(data.turno);
+    });
 
-    function resolverTirada(indices) {
-        if (indices.length === 5 && indices.every(v => v === 5)) {
-            decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA!");
-            setTimeout(() => { mostrarModalGanador(jugadores[turnoIdx].nombre); }, 800);
-            bloqueo = false;
+    socket.on('resultado-tirada', (data) => {
+        bloqueo = false;
+        if (data.puntos === 0) {
+            document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
+            document.getElementById('btn-tirar').disabled = true;
+            document.getElementById('btn-plantar').disabled = true;
+            // Avisamos al servidor que perdemos el turno para que pase al siguiente
+            setTimeout(() => socket.emit('perder-turno', codigoSala), 1500);
             return;
         }
 
-        const zona = document.getElementById('zona-tiro'), reserva = document.getElementById('reserva');
-        let conteo = [0,0,0,0,0,0];
-        indices.forEach(idx => conteo[idx]++);
+        puntosTurno += data.puntos;
+        document.getElementById('pts-turno').innerText = puntosTurno;
+        document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
         
-        let ptsTirada = 0;
-        let reservadosPorCara = [0,0,0,0,0,0];
-        let dadosReservados = [];
+        // Animar dados (simplificado para online)
+        animarDadosServidor(data.dados);
 
+        // Habilitar botones si es mi turno
+        if (esMiTurno) {
+            document.getElementById('btn-tirar').disabled = false;
+            // Validar si puede plantarse (lógica visual, el servidor valida al final)
+            const jugadorActual = jugadores.find(j => j.id === miId);
+            let min = (jugadorActual && jugadorActual.puntos >= 4000) ? 100 : 300;
+            let puedePlantar = (puntosTurno >= min) && (puntosTurno % 100 === 0) && (jugadorActual.puntos + puntosTurno <= 5000);
+            document.getElementById('btn-plantar').disabled = !puedePlantar;
+        }
+    });
+
+    socket.on('victoria-instantanea', (data) => {
+        mostrarGanador(data.ganador);
+    });
+
+    socket.on('partida-terminada', (data) => {
+        mostrarGanador(data.ganador);
+    });
+
+    socket.on('cambiar-turno', (data) => {
+        jugadores = data.jugadores;
+        renderizarMarcador();
+        actualizarTurnoUI(data.turno);
+        limpiarMesa();
+        puntosTurno = 0;
+        document.getElementById('pts-turno').innerText = "0";
+        document.getElementById('anuncio').innerText = `Turno de ${data.jugador}`;
+    });
+
+    socket.on('turno-perdido', (data) => {
+        document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada.</b>`;
+    });
+
+    // ================= LÓGICA DE JUEGO (CLIENTE) =================
+    function enviarTirada() {
+        if (!esMiTurno || bloqueo) return;
+        bloqueo = true;
+        document.getElementById('btn-tirar').disabled = true;
+        document.getElementById('btn-plantar').disabled = true;
+        document.getElementById('anuncio').innerText = "Tirando...";
+        limpiarZonaActiva();
+        
+        const cubilete = document.getElementById('cubilete');
+        cubilete.classList.remove('anim-lanzar'); void cubilete.offsetWidth; cubilete.classList.add('anim-lanzar');
+        
+        socket.emit('tirar-dados', codigoSala);
+    }
+
+    function enviarPlantarse() {
+        if (!esMiTurno || bloqueo) return;
+        bloqueo = true;
+        document.getElementById('btn-tirar').disabled = true;
+        document.getElementById('btn-plantar').disabled = true;
+        socket.emit('plantarse', codigoSala);
+    }
+
+    function actualizarTurnoUI(turnoIdx) {
+        const jugadorTurno = jugadores[turnoIdx];
+        esMiTurno = (jugadorTurno.id === miId);
+        
+        document.querySelectorAll('.jugador-box').forEach((box, idx) => {
+            if (idx === turnoIdx) box.classList.add('activo');
+            else box.classList.remove('activo');
+        });
+
+        if (esMiTurno) {
+            document.getElementById('btn-tirar').disabled = false;
+            document.getElementById('anuncio').innerText = "¡Es tu turno! Tira los dados.";
+        } else {
+            document.getElementById('btn-tirar').disabled = true;
+            document.getElementById('btn-plantar').disabled = true;
+        }
+    }
+
+    function renderizarMarcador() {
+        const grid = document.getElementById('grid-jugadores');
+        grid.innerHTML = "";
+        jugadores.forEach((j, i) => {
+            grid.innerHTML += `
+                <div class="jugador-box" id="j-box-${i}">
+                    <div class="label-jugador">${j.nombre}</div>
+                    <div class="pts-t">${j.puntos}</div>
+                </div>`;
+        });
+    }
+
+    function actualizarListaLobby(jugadores) {
+        const lista = document.getElementById('lista-jugadores');
+        lista.innerHTML = '';
+        jugadores.forEach(j => {
+            lista.innerHTML += `<li>👤 ${j.nombre}</li>`;
+        });
+    }
+
+    // ================= VISUAL (Dados y Animaciones) =================
+    function limpiarZonaActiva() {
+        document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove());
+    }
+    function limpiarMesa() {
+        limpiarZonaActiva();
+        document.getElementById('reserva').innerHTML = "";
+    }
+
+    function animarDadosServidor(indices) {
+        const zona = document.getElementById('zona-tiro');
         indices.forEach((idx, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
             d.innerHTML = CARAS[idx].html;
-            
-            const pos = obtenerPosicionSegura();
-            posicionesDados.push(pos);
-            d.style.left = pos.x + "px";
-            d.style.top = pos.y + "px";
+            // Posición aleatoria simple
+            const x = Math.random() * (zona.offsetWidth - 70) + 5;
+            const y = Math.random() * (zona.offsetHeight - 70) + 5;
+            d.style.left = x + "px";
+            d.style.top = y + "px";
             zona.appendChild(d);
-            
-            setTimeout(() => { d.classList.add('visible'); d.style.transform = `rotate(${Math.random()*60-30}deg)`; }, i*100);
-
-            let debeReservar = false;
-            if (idx === 4 || idx === 5) debeReservar = true;
-            else if (conteo[idx] >= 3 && reservadosPorCara[idx] < 3) {
-                debeReservar = true;
-                reservadosPorCara[idx]++;
-            }
-
-            if (debeReservar) dadosReservados.push(d);
-        });
-
-        conteo.forEach((cant, id) => {
-            if (cant >= 3) ptsTirada += CARAS[id].valTrio + (id===4?(cant-3)*50 : id===5?(cant-3)*100 : 0);
-            else { if(id===4) ptsTirada += cant*50; if(id===5) ptsTirada += cant*100; }
-        });
-
-        dadosReservados.forEach((d, i) => {
-            setTimeout(() => {
-                if (d.parentNode) { 
+            setTimeout(() => { 
+                d.classList.add('visible'); 
+                d.style.transform = `rotate(${Math.random()*60-30}deg)`; 
+                // Simular reserva visual
+                setTimeout(() => {
                     d.classList.add('puntuando');
-                    setTimeout(() => { 
-                        if (d.parentNode) { 
-                            d.classList.replace('puntuando', 'reservado'); 
-                            reserva.appendChild(d); 
-                        }
-                    }, 800);
-                }
-            }, 1200 + i*100);
+                    setTimeout(() => {
+                        d.classList.replace('puntuando', 'reservado');
+                        document.getElementById('reserva').appendChild(d);
+                        d.style.position = 'static';
+                    }, 500);
+                }, 500);
+            }, i*100);
         });
-
-        setTimeout(() => {
-            if (ptsTirada === 0) {
-                document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
-                decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
-                setTimeout(() => { cambiarTurno(); bloqueo = false; }, 2000);
-                return;
-            }
-
-            puntosTurno += ptsTirada;
-            dadosActivos -= dadosReservados.length;
-            document.getElementById('pts-turno').innerText = puntosTurno;
-
-            if (dadosActivos === 0) {
-                document.getElementById('anuncio').innerText = "¡MESA LIMPIA! TIRAS DE NUEVO";
-                decir("¡Mesa limpia!");
-                limpiarTodo(); 
-                dadosActivos = 5;
-                setTimeout(() => { bloqueo = false; actualizarBotones(); }, 400);
-                return;
-            }
-
-            bloqueo = false;
-            actualizarBotones();
-        }, 2200);
     }
 
-    function actualizarBotones() {
-        let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
-        let cumpleMin = (puntosTurno >= min);
-        let multiplo100 = (puntosTurno % 100 === 0);
-        let sePasa = (jugadores[turnoIdx].puntos + puntosTurno > 5000);
-        let puedePlantar = cumpleMin && multiplo100 && !sePasa;
-
-        document.getElementById('btn-tirar').disabled = false;
-        document.getElementById('btn-plantar').disabled = !puedePlantar;
-
-        if (sePasa) {
-            document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡TE PASASTE!</b>";
-            decir("Te has pasado de cinco mil.");
-            setTimeout(() => cambiarTurno(), 1500);
-            return;
-        }
-
-        if (puedePlantar) {
-            let frase = "";
-            if (dadosActivos === 0 || dadosActivos === 5) frase = "Tienes todos los dados. ¿Te arriesgas o te plantas?";
-            else if (dadosActivos === 1) frase = "Te queda un dado. ¿Te arriesgas o te plantas?";
-            else frase = "Te quedan " + dadosActivos + " dados. ¿Te arriesgas o te plantas?";
-            setTimeout(() => decir(frase), 300);
-        }
-    }
-
-    function plantarse() {
-        if (bloqueo) return;
-        let min = (jugadores[turnoIdx].puntos >= 4000) ? 100 : 300;
-        if (puntosTurno < min || puntosTurno % 100 !== 0 || jugadores[turnoIdx].puntos + puntosTurno > 5000) {
-            actualizarBotones(); return;
-        }
-
-        bloqueo = true;
-        let fraseTaunt = "";
-        if (dadosActivos === 5) fraseTaunt = "¡Cagao!";
-        else if (dadosActivos === 4) fraseTaunt = "¡Qué gallina!";
-        else if (dadosActivos === 3) fraseTaunt = "¡Cobarde!";
-
-        if (fraseTaunt) {
-            decir(fraseTaunt, { pitch: 0.75, rate: 0.85 });
-            setTimeout(() => { decir("Te plantas con " + puntosTurno + " puntos."); registrarVictoriaYTurno(); }, 1200);
-        } else {
-            decir("Te plantas con " + puntosTurno + " puntos.");
-            registrarVictoriaYTurno();
-        }
-    }
-
-    function registrarVictoriaYTurno() {
-        jugadores[turnoIdx].puntos += puntosTurno;
-        document.getElementById(`j-pts-${turnoIdx}`).innerText = jugadores[turnoIdx].puntos;
-        
-        if (jugadores[turnoIdx].puntos === 5000) { 
-            setTimeout(() => decir("¡Enhorabuena!"), 400);
-            setTimeout(() => { mostrarModalGanador(jugadores[turnoIdx].nombre); }, 1200);
-        } else {
-            setTimeout(() => { cambiarTurno(); bloqueo = false; }, 1000);
-        }
-    }
-
-    function cambiarTurno() {
-        limpiarTodo();
-        puntosTurno = 0; dadosActivos = 5; bloqueo = false;
-        document.querySelectorAll('.jugador-box').forEach(b => b.classList.remove('activo'));
-        turnoIdx = (turnoIdx + 1) % numJugadores;
-        document.getElementById(`j-box-${turnoIdx}`).classList.add('activo');
-        document.getElementById('pts-turno').innerText = "0";
-        document.getElementById('anuncio').innerText = `Turno ${jugadores[turnoIdx].nombre}`;
-        decir("Turno de " + jugadores[turnoIdx].nombre);
-        actualizarBotones();
-    }
-
-    function abrirModal() { document.getElementById('modal-instrucciones').classList.add('activo'); }
-    function cerrarModal() { document.getElementById('modal-instrucciones').classList.remove('activo'); }
-    document.getElementById('modal-instrucciones').addEventListener('click', e => { if(e.target===this) cerrarModal(); });
-
-    function toggleFullscreen() {
-        if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
-        else document.exitFullscreen().catch(()=>{});
-    }
-    document.addEventListener('fullscreenchange', () => {
-        const btn = document.querySelector('.btn-fullscreen');
-        if(btn) btn.innerHTML = document.fullscreenElement ? '❌ SALIR DE PANTALLA COMPLETA' : '🖥️ PANTALLA COMPLETA';
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const barra = document.getElementById('barra-relleno');
-        const pantallaCarga = document.getElementById('pantalla-carga');
-        if (barra && pantallaCarga) {
-            void barra.offsetWidth;
-            barra.style.width = '100%';
-            
-            const contenedorBarra = document.querySelector('.barra-carga-contenedor');
-            const intervaloChispas = setInterval(() => {
-                if (!pantallaCarga.classList.contains('oculto')) {
-                    const chispa = document.createElement('div');
-                    chispa.className = 'chispa';
-                    const anchoActual = barra.offsetWidth;
-                    chispa.style.left = (anchoActual - 2) + 'px';
-                    chispa.style.top = '2px';
-                    chispa.style.setProperty('--tx', (Math.random() * 30 - 15) + 'px');
-                    chispa.style.setProperty('--ty', (Math.random() * -40 - 15) + 'px');
-                    contenedorBarra.appendChild(chispa);
-                    setTimeout(() => chispa.remove(), 700);
-                }
-            }, 120);
-
-            setTimeout(() => {
-                clearInterval(intervaloChispas);
-                pantallaCarga.classList.add('oculto');
-                setTimeout(() => { if(pantallaCarga.parentNode) pantallaCarga.remove(); }, 800);
-            }, 6300);
-        }
-    });
-
-    // ================= LÓGICA MODAL GANADOR =================
-    function mostrarModalGanador(nombre) {
-        const modal = document.getElementById('modal-ganador');
+    function mostrarGanador(nombre) {
         document.getElementById('nombre-ganador').innerText = nombre;
-        modal.style.display = 'flex';
-        
-        // Voz anunciadora
-        decir(`El jugador ${nombre} ha ganado la partida. Un aplauso, por lo bien que ha jugado.`);
-        
-        // 🔊 APLAUSOS LOCALES (archivo ogg en misma carpeta)
-        const audioAplausos = new Audio('aplausos.ogg');
-        audioAplausos.volume = 0.6;
-        audioAplausos.play().catch(() => {});
+        document.getElementById('modal-ganador').style.display = 'flex';
     }
-    // ======================================================
 </script>
 </body>
 </html>
