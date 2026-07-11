@@ -64,18 +64,19 @@
 </head>
 <body>
 
+    <!-- LOBBY -->
     <div id="lobby">
         <div class="lobby-box">
-            <h1>🎲 5.000 PRO</h1>
+            <h1> 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
             <div id="seccion-crear">
-                <button class="btn-lobby" onclick="crearSala()"> CREAR SALA</button>
+                <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
             <div id="seccion-unirse" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
-                <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
+                <button class="btn-lobby" onclick="unirseSala()">🔗 UNIRSE A SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarCrear()">⬅️ VOLVER</button>
             </div>
             <div id="seccion-sala" style="display:none;">
@@ -83,12 +84,13 @@
                 <div id="codigo-sala-display"></div>
                 <ul id="lista-jugadores" class="lista-jugadores-lobby"></ul>
                 <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
-                <button class="btn-lobby btn-danger" onclick="location.reload()"> CANCELAR</button>
+                <button class="btn-lobby btn-danger" onclick="location.reload()">🚪 CANCELAR</button>
             </div>
             <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
         </div>
     </div>
 
+    <!-- JUEGO -->
     <div id="pantalla-juego">
         <div class="panel-superior">
             <div id="grid-jugadores" class="grid-jugadores"></div>
@@ -105,9 +107,10 @@
         </div>
     </div>
 
+    <!-- MODAL GANADOR -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2>🏆 ¡GANADOR!</h2>
+            <h2> ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
@@ -134,6 +137,7 @@
     function iniciarPartida() { socket.emit('iniciar-partida', codigoSala); }
     function mostrarError(msg) { document.getElementById('mensaje-error').innerText = msg; setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000); }
 
+    // EVENTOS DEL SERVIDOR
     socket.on('sala-creada', (data) => {
         codigoSala = data.codigo; miId = socket.id;
         document.getElementById('seccion-crear').style.display = 'none';
@@ -141,6 +145,19 @@
         document.getElementById('codigo-sala-display').innerText = codigoSala;
         actualizarListaLobby([data]);
     });
+
+    // FIX: Evento para el invitado que se une
+    socket.on('unido-a-sala', (data) => {
+        codigoSala = data.codigo;
+        miId = socket.id;
+        document.getElementById('seccion-unirse').style.display = 'none';
+        document.getElementById('seccion-crear').style.display = 'none';
+        document.getElementById('seccion-sala').style.display = 'block';
+        document.getElementById('codigo-sala-display').innerText = codigoSala;
+        actualizarListaLobby(data.jugadores);
+        document.getElementById('btn-iniciar').disabled = data.jugadores.length < 2;
+    });
+
     socket.on('jugador-unido', (data) => {
         if (document.getElementById('seccion-sala').style.display !== 'none') {
             actualizarListaLobby(data.jugadores);
@@ -195,6 +212,7 @@
         document.getElementById('anuncio').innerText = `Turno de ${data.jugador}`;
     });
 
+    // ACCIONES DEL JUGADOR
     function enviarTirada() {
         if (!esMiTurno || bloqueo) return;
         bloqueo = true;
@@ -215,6 +233,7 @@
         socket.emit('plantarse', codigoSala);
     }
 
+    // UI HELPERS
     function actualizarTurnoUI(turnoIdx) {
         const jugadorTurno = jugadores[turnoIdx];
         esMiTurno = (jugadorTurno.id === miId);
@@ -241,7 +260,7 @@
     function actualizarListaLobby(jugadores) {
         const lista = document.getElementById('lista-jugadores');
         lista.innerHTML = '';
-        jugadores.forEach(j => lista.innerHTML += `<li>👤 ${j.nombre}</li>`);
+        jugadores.forEach(j => lista.innerHTML += `<li> ${j.nombre}</li>`);
     }
 
     function limpiarZonaActiva() { document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); }
