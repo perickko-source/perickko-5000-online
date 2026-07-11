@@ -10,6 +10,16 @@
         html, body { overflow: hidden; height: 100dvh; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; touch-action: none; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
+        /* PANTALLA DE CARGA */
+        #pantalla-carga { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8vh; box-sizing: border-box; transition: opacity 0.8s ease; }
+        #pantalla-carga.oculto { opacity: 0; pointer-events: none; }
+        .portada-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('portada.png') center/contain no-repeat #050505; z-index: -1; }
+        .barra-carga-contenedor { width: min(85%, 400px); height: 14px; background: rgba(0,0,0,0.7); border-radius: 12px; overflow: visible; border: 2px solid var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.3); position: relative; }
+        .barra-carga-relleno { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), #fff, var(--gold)); box-shadow: 0 0 15px var(--gold); border-radius: 10px; transition: width 4s cubic-bezier(0.25, 1, 0.5, 1); position: relative; }
+        .texto-carga { color: var(--gold); font-family: 'Arial Black', sans-serif; font-size: 15px; margin-top: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px; animation: parpadeo 1.2s infinite alternate; }
+        @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
+
+        /* LOBBY */
         #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .lobby-box h1 { color: var(--gold); margin-bottom: 20px; font-size: 28px; }
@@ -24,6 +34,7 @@
         .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; list-style: none; }
         .lista-jugadores-lobby li { margin-bottom: 5px; color: #ccc; font-size: 14px; }
 
+        /* JUEGO */
         #pantalla-juego { display: none; width: 100%; height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
@@ -64,10 +75,19 @@
 </head>
 <body>
 
+    <!-- PANTALLA DE CARGA -->
+    <div id="pantalla-carga">
+        <div class="portada-img"></div>
+        <div style="position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <div class="barra-carga-contenedor"><div class="barra-carga-relleno" id="barra-relleno"></div></div>
+            <div class="texto-carga">Cargando...</div>
+        </div>
+    </div>
+
     <!-- LOBBY -->
-    <div id="lobby">
+    <div id="lobby" style="display:none;">
         <div class="lobby-box">
-            <h1> 5.000 PRO</h1>
+            <h1>🎲 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
             <div id="seccion-crear">
                 <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
@@ -110,13 +130,39 @@
     <!-- MODAL GANADOR -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2> ¡GANADOR!</h2>
+            <h2>🏆 ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
     </div>
 
 <script>
+    // CARGA INICIAL
+    window.onload = () => {
+        const barra = document.getElementById('barra-relleno');
+        const pantallaCarga = document.getElementById('pantalla-carga');
+        const lobby = document.getElementById('lobby');
+        if (barra && pantallaCarga) {
+            void barra.offsetWidth;
+            barra.style.width = '100%';
+            setTimeout(() => {
+                pantallaCarga.classList.add('oculto');
+                lobby.style.display = 'flex';
+                setTimeout(() => { if(pantallaCarga.parentNode) pantallaCarga.remove(); }, 800);
+            }, 4000);
+        }
+    };
+
+    // SONIDOS Y VOCES
+    const sonidoCubilete = new Audio('cubilete.ogg'); 
+    const audioAplausos = new Audio('aplausos.ogg');
+    function decir(texto) {
+        if (!texto) return;
+        const msg = new SpeechSynthesisUtterance(texto);
+        msg.lang = 'es-ES'; msg.rate = 0.95;
+        window.speechSynthesis.speak(msg);
+    }
+
     const socket = io(); 
     let miId = socket.id, codigoSala = '', miNombre = '', esMiTurno = false, jugadores = []; 
     let puntosTurno = 0, bloqueo = false;
@@ -134,10 +180,9 @@
     function mostrarCrear() { document.getElementById('seccion-unirse').style.display = 'none'; document.getElementById('seccion-crear').style.display = 'block'; }
     function crearSala() { miNombre = document.getElementById('input-nombre').value.trim(); if (!miNombre) return mostrarError("Pon un nombre"); socket.emit('crear-sala', miNombre); }
     function unirseSala() { miNombre = document.getElementById('input-nombre').value.trim(); codigoSala = document.getElementById('input-codigo').value.trim().toUpperCase(); if (!miNombre) return mostrarError("Pon un nombre"); if (!codigoSala) return mostrarError("Pon un código"); socket.emit('unirse-sala', { codigo: codigoSala, nombre: miNombre }); }
-    function iniciarPartida() { socket.emit('iniciar-partida', codigoSala); }
+    function iniciarPartida() { socket.emit('iniciar-partida', codigoSala); decir("Empieza la partida. ¡Suerte!"); }
     function mostrarError(msg) { document.getElementById('mensaje-error').innerText = msg; setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000); }
 
-    // EVENTOS DEL SERVIDOR
     socket.on('sala-creada', (data) => {
         codigoSala = data.codigo; miId = socket.id;
         document.getElementById('seccion-crear').style.display = 'none';
@@ -146,10 +191,8 @@
         actualizarListaLobby([data]);
     });
 
-    // FIX: Evento para el invitado que se une
     socket.on('unido-a-sala', (data) => {
-        codigoSala = data.codigo;
-        miId = socket.id;
+        codigoSala = data.codigo; miId = socket.id;
         document.getElementById('seccion-unirse').style.display = 'none';
         document.getElementById('seccion-crear').style.display = 'none';
         document.getElementById('seccion-sala').style.display = 'block';
@@ -181,8 +224,13 @@
         limpiarZonaActiva();
         animarDadosServidor(data.dados, data.dadosQuePuntuan);
 
-        if (data.mesaLimpia) document.getElementById('anuncio').innerText = "¡MESA LIMPIA! Tiras de nuevo con 5";
-        else document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
+        if (data.mesaLimpia) {
+            document.getElementById('anuncio').innerText = "¡MESA LIMPIA! Tiras de nuevo con 5";
+            decir("¡Mesa limpia!");
+            setTimeout(() => limpiarMesa(), 1000); // Limpiar reserva visualmente tras mesa limpia
+        } else {
+            document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
+        }
 
         if (esMiTurno) {
             document.getElementById('btn-tirar').disabled = false;
@@ -197,10 +245,14 @@
         document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada. Pierde turno.</b>`;
         document.getElementById('btn-tirar').disabled = true;
         document.getElementById('btn-plantar').disabled = true;
+        decir("¡Cero patatero!");
     });
 
     socket.on('victoria-instantanea', (data) => mostrarGanador(data.ganador));
-    socket.on('partida-terminada', (data) => mostrarGanador(data.ganador));
+    socket.on('partida-terminada', (data) => {
+        mostrarGanador(data.ganador);
+        audioAplausos.volume = 0.6; audioAplausos.play().catch(() => {});
+    });
     
     socket.on('cambiar-turno', (data) => {
         jugadores = data.jugadores;
@@ -210,9 +262,9 @@
         puntosTurno = 0;
         document.getElementById('pts-turno').innerText = "0";
         document.getElementById('anuncio').innerText = `Turno de ${data.jugador}`;
+        decir(`Turno de ${data.jugador}`);
     });
 
-    // ACCIONES DEL JUGADOR
     function enviarTirada() {
         if (!esMiTurno || bloqueo) return;
         bloqueo = true;
@@ -221,6 +273,7 @@
         document.getElementById('anuncio').innerText = "Tirando...";
         limpiarZonaActiva();
         const cubilete = document.getElementById('cubilete');
+        sonidoCubilete.currentTime = 0; sonidoCubilete.play().catch(() => {});
         cubilete.classList.remove('anim-lanzar'); void cubilete.offsetWidth; cubilete.classList.add('anim-lanzar');
         socket.emit('tirar-dados', codigoSala);
     }
@@ -233,7 +286,6 @@
         socket.emit('plantarse', codigoSala);
     }
 
-    // UI HELPERS
     function actualizarTurnoUI(turnoIdx) {
         const jugadorTurno = jugadores[turnoIdx];
         esMiTurno = (jugadorTurno.id === miId);
@@ -301,6 +353,7 @@
     function mostrarGanador(nombre) {
         document.getElementById('nombre-ganador').innerText = nombre;
         document.getElementById('modal-ganador').style.display = 'flex';
+        decir(`¡Enhorabuena ${nombre}! Has ganado la partida.`);
     }
 </script>
 </body>
