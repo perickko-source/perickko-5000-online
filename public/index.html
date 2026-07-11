@@ -221,7 +221,7 @@
         puntosTurno = data.puntosTurno;
         document.getElementById('pts-turno').innerText = puntosTurno;
 
-        limpiarZonaActiva();
+        // NO limpiamos la zona activa aquí, los dados se quedan visibles
         animarDadosServidor(data.dados, data.dadosQuePuntuan);
 
         if (data.mesaLimpia) {
@@ -271,6 +271,7 @@
         document.getElementById('btn-tirar').disabled = true;
         document.getElementById('btn-plantar').disabled = true;
         document.getElementById('anuncio').innerText = "Tirando...";
+        // Solo limpiamos la zona activa cuando vamos a tirar de nuevo
         limpiarZonaActiva();
         const cubilete = document.getElementById('cubilete');
         sonidoCubilete.currentTime = 0; sonidoCubilete.play().catch(() => {});
@@ -315,17 +316,20 @@
         jugadores.forEach(j => lista.innerHTML += `<li> ${j.nombre}</li>`);
     }
 
-    function limpiarZonaActiva() { document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); }
-    function limpiarMesa() { limpiarZonaActiva(); document.getElementById('reserva').innerHTML = ""; }
+    function limpiarZonaActiva() { 
+        // Solo elimina los dados de la zona de tiro, no los de reserva
+        document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); 
+    }
+    function limpiarMesa() { 
+        limpiarZonaActiva(); 
+        document.getElementById('reserva').innerHTML = ""; 
+    }
 
-    // FIX: Función corregida para eliminar completamente los dados que no puntúan
+    // FIX: Los dados que no puntúan se quedan visibles en el tapete
     function animarDadosServidor(dados, dadosQuePuntuan) {
         const zona = document.getElementById('zona-tiro');
         const reserva = document.getElementById('reserva');
         let pendientes = [...dadosQuePuntuan];
-
-        // Primero limpiamos cualquier dado residual que hubiera quedado
-        limpiarZonaActiva();
 
         dados.forEach((idx, i) => {
             const d = document.createElement('div');
@@ -348,16 +352,9 @@
                         reserva.appendChild(d);
                         d.style.position = 'static';
                     }, 800);
-                } else {
-                    // Dado que NO puntúa: se muestra brevemente y se ELIMINA del DOM
-                    setTimeout(() => {
-                        d.style.transition = 'opacity 0.5s, transform 0.5s';
-                        d.style.opacity = '0';
-                        d.style.transform = 'scale(0.3)';
-                        // Eliminar completamente después de la animación
-                        setTimeout(() => { if (d.parentNode) d.remove(); }, 500);
-                    }, 1000);
                 }
+                // Los dados que NO puntúan se quedan visibles en el tapete
+                // Se eliminarán solo cuando se pulse "Tirar" de nuevo o cambie el turno
             }, i * 100);
         });
     }
