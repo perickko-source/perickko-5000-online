@@ -87,16 +87,16 @@
     <!-- LOBBY -->
     <div id="lobby">
         <div class="lobby-box">
-            <h1>🎲 5.000 PRO</h1>
+            <h1> 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
             <div id="seccion-crear">
-                <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
+                <button class="btn-lobby" onclick="crearSala()"> CREAR SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
             <div id="seccion-unirse" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
-                <button class="btn-lobby" onclick="unirseSala()">🔗 UNIRSE A SALA</button>
+                <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarCrear()">⬅️ VOLVER</button>
             </div>
             <div id="seccion-sala" style="display:none;">
@@ -104,7 +104,7 @@
                 <div id="codigo-sala-display"></div>
                 <ul id="lista-jugadores" class="lista-jugadores-lobby"></ul>
                 <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
-                <button class="btn-lobby btn-danger" onclick="location.reload()">🚪 CANCELAR</button>
+                <button class="btn-lobby btn-danger" onclick="location.reload()"> CANCELAR</button>
             </div>
             <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
         </div>
@@ -130,7 +130,7 @@
     <!-- MODAL GANADOR -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2> ¡GANADOR!</h2>
+            <h2>🏆 ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 VOLVER AL LOBBY</button>
         </div>
@@ -313,7 +313,7 @@
     function actualizarListaLobby(jugadores) {
         const lista = document.getElementById('lista-jugadores');
         lista.innerHTML = '';
-        jugadores.forEach(j => lista.innerHTML += `<li> ${j.nombre}</li>`);
+        jugadores.forEach(j => lista.innerHTML += `<li>👤 ${j.nombre}</li>`);
     }
 
     function limpiarZonaActiva() { 
@@ -325,19 +325,58 @@
         document.getElementById('reserva').innerHTML = ""; 
     }
 
-    // FIX: Los dados que no puntúan se quedan visibles en el tapete
+    // FIX: Sistema de posicionamiento sin solapamiento
     function animarDadosServidor(dados, dadosQuePuntuan) {
         const zona = document.getElementById('zona-tiro');
         const reserva = document.getElementById('reserva');
         let pendientes = [...dadosQuePuntuan];
+        
+        // Array para guardar las posiciones ocupadas y evitar solapamientos
+        const posicionesOcupadas = [];
+        const TAMANO_DADO = 60;
+        const MARGEN_MINIMO = 10; // Espacio mínimo entre dados
+        const DISTANCIA_MINIMA = TAMANO_DADO + MARGEN_MINIMO; // 70px de separación
+
+        function obtenerPosicionSinSolapamiento() {
+            const maxX = zona.offsetWidth - TAMANO_DADO - 10;
+            const maxY = zona.offsetHeight - TAMANO_DADO - 10;
+            const minX = 10;
+            const minY = 10;
+            
+            // Intentar hasta 50 veces encontrar una posición libre
+            for (let intento = 0; intento < 50; intento++) {
+                const x = Math.random() * (maxX - minX) + minX;
+                const y = Math.random() * (maxY - minY) + minY;
+                
+                // Verificar si colisiona con algún dado ya colocado
+                const colisiona = posicionesOcupadas.some(pos => {
+                    const distanciaX = Math.abs(x - pos.x);
+                    const distanciaY = Math.abs(y - pos.y);
+                    return distanciaX < DISTANCIA_MINIMA && distanciaY < DISTANCIA_MINIMA;
+                });
+                
+                if (!colisiona) {
+                    posicionesOcupadas.push({x, y});
+                    return {x, y};
+                }
+            }
+            
+            // Si no encuentra posición libre, usar una por defecto (esquina inferior izquierda en cascada)
+            const x = 20 + (posicionesOcupadas.length * 15);
+            const y = zona.offsetHeight - TAMANO_DADO - 20;
+            posicionesOcupadas.push({x, y});
+            return {x, y};
+        }
 
         dados.forEach((idx, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
             d.innerHTML = CARAS[idx].html;
-            const x = Math.random() * (zona.offsetWidth - 70) + 5;
-            const y = Math.random() * (zona.offsetHeight - 70) + 5;
-            d.style.left = x + "px"; d.style.top = y + "px";
+            
+            // Obtener posición sin solapamiento
+            const pos = obtenerPosicionSinSolapamiento();
+            d.style.left = pos.x + "px"; 
+            d.style.top = pos.y + "px";
             zona.appendChild(d);
             
             setTimeout(() => {
@@ -354,7 +393,6 @@
                     }, 800);
                 }
                 // Los dados que NO puntúan se quedan visibles en el tapete
-                // Se eliminarán solo cuando se pulse "Tirar" de nuevo o cambie el turno
             }, i * 100);
         });
     }
