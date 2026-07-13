@@ -14,14 +14,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const salas = {};
 
-// Valores de los dados
+// Valores de los dados según reglas originales
 const VALORES = {
-    0: { nombre: '1', trio: 100, individual: 100 },
-    1: { nombre: '2', trio: 200, individual: 0 },
+    0: { nombre: '1', trio: 100, individual: 100 },  // 1 negro = 100
+    1: { nombre: '2', trio: 200, individual: 0 },    // 2 rojo = 0 individual
     2: { nombre: 'J', trio: 300, individual: 0 },
     3: { nombre: 'Q', trio: 400, individual: 0 },
-    4: { nombre: 'K', trio: 500, individual: 50 },
-    5: { nombre: 'As', trio: 1000, individual: 100 }
+    4: { nombre: 'K', trio: 500, individual: 50 },   // K = 50 individual
+    5: { nombre: 'As', trio: 1000, individual: 100 } // As = 100 individual
 };
 
 function generarCodigoSala() {
@@ -31,21 +31,18 @@ function generarCodigoSala() {
     return codigo;
 }
 
-// Calcula puntos y devuelve qué dados específicos puntúan
+// Calcula puntos según reglas originales
 function calcularTirada(dados) {
-    // dados es un array de valores: [0, 2, 2, 2, 4]
     const conteo = [0, 0, 0, 0, 0, 0];
     dados.forEach(v => conteo[v]++);
     
     let puntos = 0;
-    // Marcamos qué dados puntúan (por índice en el array original)
     const dadosPuntuados = new Array(dados.length).fill(false);
     
     // Primero: tríos
     for (let valor = 0; valor < 6; valor++) {
         if (conteo[valor] >= 3) {
             puntos += VALORES[valor].trio;
-            // Marcar los primeros 3 dados de este valor como puntuados
             let marcados = 0;
             for (let i = 0; i < dados.length && marcados < 3; i++) {
                 if (dados[i] === valor && !dadosPuntuados[i]) {
@@ -65,9 +62,9 @@ function calcularTirada(dados) {
         }
     }
     
-    // Segundo: dados individuales (1 y K) que no estén en trío
+    // Segundo: dados individuales (1, K y As) que no estén en trío
     for (let i = 0; i < dados.length; i++) {
-        if (!dadosPuntuados[i] && (dados[i] === 0 || dados[i] === 4)) {
+        if (!dadosPuntuados[i] && (dados[i] === 0 || dados[i] === 4 || dados[i] === 5)) {
             dadosPuntuados[i] = true;
             puntos += VALORES[dados[i]].individual;
         }
@@ -121,13 +118,11 @@ io.on('connection', (socket) => {
         if (!sala || sala.estado !== 'jugando') return;
         if (sala.jugadores[sala.turno].id !== socket.id) return;
         
-        // Generar dados en el servidor
         const dados = [];
         for (let i = 0; i < sala.dadosActivos; i++) {
             dados.push(Math.floor(Math.random() * 6));
         }
         
-        // Calcular qué dados puntúan
         const resultado = calcularTirada(dados);
         
         // Victoria instantánea: 5 Ases
@@ -137,9 +132,8 @@ io.on('connection', (socket) => {
             return;
         }
         
-        // Si no puntúa nada
+        // Si no puntúa nada → pierde turno
         if (resultado.puntos === 0) {
-            // Enviar dados para que se vean
             io.to(codigo).emit('resultado-tirada', {
                 dados: dados.map((v, i) => ({ valor: v, puntua: false })),
                 puntosGanados: 0,
@@ -157,17 +151,17 @@ io.on('connection', (socket) => {
         // Sumar puntos
         sala.puntosTurno += resultado.puntos;
         
-        // Calcular dados restantes (los que NO puntúan)
+        // Calcular dados restantes
         const dadosQueQuedan = dados.filter((v, i) => !resultado.dadosPuntuados[i]);
         sala.dadosActivos = dadosQueQuedan.length;
         
         let mesaLimpia = false;
+        // Todos puntúan → tira de nuevo con 5
         if (sala.dadosActivos === 0) {
             sala.dadosActivos = 5;
             mesaLimpia = true;
         }
 
-        // Enviar resultado a TODA la sala
         const dadosConEstado = dados.map((v, i) => ({
             valor: v,
             puntua: resultado.dadosPuntuados[i]
@@ -187,14 +181,30 @@ io.on('connection', (socket) => {
         if (sala.jugadores[sala.turno].id !== socket.id) return;
         
         const jugador = sala.jugadores[sala.turno];
+        // Regla: mínimo 300, o 100 si tiene >= 4000
         const puntosMinimos = jugador.puntos >= 4000 ? 100 : 300;
         
-        if (sala.puntosTurno < puntosMinimos || sala.puntosTurno % 100 !== 0 || jugador.puntos + sala.puntosTurno > 5000) {
-            return socket.emit('error-plantarse', 'No puedes plantarte ahora');
+        // Validaciones según reglas:
+        // 1. Mínimo de puntos
+        // 2. Debe ser número redondo (múltiplo de 100)
+        // 3. No puede pasarse de 5000
+        if (sala.puntosTurno < puntosMinimos) {
+            return socket.emit('error-plantarse', `Mínimo ${puntosMinimos} puntos`);
+        }
+        if (sala.puntosTurno % 100 !== 0) {
+            return socket.emit('error-plantarse', 'Debe ser número redondo (múltiplo de 100)');
+        }
+        if (jugador.puntos + sala.puntosTurno > 5000) {
+            return socket.emit('error-plantarse', '¡Te pasas de 5000!');
+        }
+        if (jugador.puntos + sala.puntosTurno < 5000 && jugador.puntos >= 4000) {
+            // Si tiene >= 4000, DEBE llegar a 5000 exactos
+            return socket.emit('error-plantarse', 'Desde 4000 debes llegar a 5000 exactos');
         }
         
         jugador.puntos += sala.puntosTurno;
         
+        // Victoria: llegar a 5000 exactos
         if (jugador.puntos === 5000) {
             sala.estado = 'terminado';
             io.to(codigo).emit('partida-terminada', { ganador: jugador.nombre });
