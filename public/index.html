@@ -10,7 +10,6 @@
         html, body { overflow: hidden; height: 100dvh; width: 100%; margin: 0; background: #050505; color: white; font-family: 'Arial Black', sans-serif; touch-action: none; }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; gap: 10px; }
 
-        /* PANTALLA DE CARGA */
         #pantalla-carga { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8vh; box-sizing: border-box; transition: opacity 0.8s ease; }
         #pantalla-carga.oculto { opacity: 0; pointer-events: none; }
         .portada-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('portada.png') center/contain no-repeat #050505; z-index: -1; }
@@ -19,7 +18,6 @@
         .texto-carga { color: var(--gold); font-family: 'Arial Black', sans-serif; font-size: 15px; margin-top: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1px; animation: parpadeo 1.2s infinite alternate; }
         @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
 
-        /* LOBBY */
         #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
         .lobby-box h1 { color: var(--gold); margin-bottom: 20px; font-size: 28px; }
@@ -34,7 +32,6 @@
         .lista-jugadores-lobby { margin: 15px 0; text-align: left; padding: 0 20px; list-style: none; }
         .lista-jugadores-lobby li { margin-bottom: 5px; color: #ccc; font-size: 14px; }
 
-        /* JUEGO */
         #pantalla-juego { display: none; width: 100%; height: 100dvh; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
         .panel-superior { width: min(94vw, 580px); text-align: center; z-index: 10; position: relative; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-bottom: 5px; }
@@ -75,7 +72,6 @@
 </head>
 <body>
 
-    <!-- PANTALLA DE CARGA -->
     <div id="pantalla-carga">
         <div class="portada-img"></div>
         <div style="position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center;">
@@ -84,13 +80,12 @@
         </div>
     </div>
 
-    <!-- LOBBY -->
     <div id="lobby">
         <div class="lobby-box">
-            <h1> 5.000 PRO</h1>
+            <h1>🎲 5.000 PRO</h1>
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
             <div id="seccion-crear">
-                <button class="btn-lobby" onclick="crearSala()"> CREAR SALA</button>
+                <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
             <div id="seccion-unirse" style="display:none;">
@@ -110,7 +105,6 @@
         </div>
     </div>
 
-    <!-- JUEGO -->
     <div id="pantalla-juego">
         <div class="panel-superior">
             <div id="grid-jugadores" class="grid-jugadores"></div>
@@ -127,7 +121,6 @@
         </div>
     </div>
 
-    <!-- MODAL GANADOR -->
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
             <h2>🏆 ¡GANADOR!</h2>
@@ -137,7 +130,6 @@
     </div>
 
 <script>
-    // CARGA INICIAL
     window.onload = () => {
         const barra = document.getElementById('barra-relleno');
         const pantallaCarga = document.getElementById('pantalla-carga');
@@ -153,7 +145,6 @@
         }
     };
 
-    // SONIDOS Y VOCES
     const sonidoCubilete = new Audio('cubilete.ogg'); 
     const audioAplausos = new Audio('aplausos.ogg');
     function decir(texto) {
@@ -167,13 +158,14 @@
     let miId = socket.id, codigoSala = '', miNombre = '', esMiTurno = false, jugadores = []; 
     let puntosTurno = 0, bloqueo = false;
 
+    // Renderizado de caras de dados
     const CARAS = [
-        { id: 0, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
-        { id: 1, html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
-        { id: 2, html: '<b style="font-size:32px; color:#222">J</b>' },
-        { id: 3, html: '<b style="font-size:32px; color:#222">Q</b>' },
-        { id: 4, html: '<b style="font-size:32px; color:red">K</b>' },
-        { id: 5, html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
+        { html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
+        { html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
+        { html: '<b style="font-size:32px; color:#222">J</b>' },
+        { html: '<b style="font-size:32px; color:#222">Q</b>' },
+        { html: '<b style="font-size:32px; color:red">K</b>' },
+        { html: '<div style="width:24px; height:24px; background:red; border-radius:50%;"></div>' }
     ];
 
     function mostrarUnirse() { document.getElementById('seccion-crear').style.display = 'none'; document.getElementById('seccion-unirse').style.display = 'block'; }
@@ -216,20 +208,24 @@
         actualizarTurnoUI(data.turno);
     });
 
+    // NUEVO: El servidor envía exactamente qué dados puntúan
     socket.on('resultado-tirada', (data) => {
         bloqueo = false;
         puntosTurno = data.puntosTurno;
         document.getElementById('pts-turno').innerText = puntosTurno;
 
-        // NO limpiamos la zona activa aquí, los dados se quedan visibles
-        animarDadosServidor(data.dados, data.dadosQuePuntuan);
+        // Limpiar zona de tiro antes de mostrar nuevos dados
+        limpiarZonaActiva();
+        
+        // Renderizar dados EXACTAMENTE como los envía el servidor
+        renderizarDados(data.dados);
 
         if (data.mesaLimpia) {
             document.getElementById('anuncio').innerText = "¡MESA LIMPIA! Tiras de nuevo con 5";
             decir("¡Mesa limpia!");
             setTimeout(() => limpiarMesa(), 1000);
         } else {
-            document.getElementById('anuncio').innerText = `+${data.puntos} puntos. ¿Tirar o Plantar?`;
+            document.getElementById('anuncio').innerText = `+${data.puntosGanados} puntos. ¿Tirar o Plantar?`;
         }
 
         if (esMiTurno) {
@@ -271,7 +267,6 @@
         document.getElementById('btn-tirar').disabled = true;
         document.getElementById('btn-plantar').disabled = true;
         document.getElementById('anuncio').innerText = "Tirando...";
-        // Solo limpiamos la zona activa cuando vamos a tirar de nuevo
         limpiarZonaActiva();
         const cubilete = document.getElementById('cubilete');
         sonidoCubilete.currentTime = 0; sonidoCubilete.play().catch(() => {});
@@ -317,7 +312,6 @@
     }
 
     function limpiarZonaActiva() { 
-        // Solo elimina los dados de la zona de tiro, no los de reserva
         document.querySelectorAll('#zona-tiro .dado').forEach(d => d.remove()); 
     }
     function limpiarMesa() { 
@@ -325,34 +319,26 @@
         document.getElementById('reserva').innerHTML = ""; 
     }
 
-    // FIX: Sistema de posicionamiento sin solapamiento
-    function animarDadosServidor(dados, dadosQuePuntuan) {
+    // NUEVO: Renderiza dados exactamente como los envía el servidor
+    function renderizarDados(dadosConEstado) {
         const zona = document.getElementById('zona-tiro');
         const reserva = document.getElementById('reserva');
-        let pendientes = [...dadosQuePuntuan];
         
-        // Array para guardar las posiciones ocupadas y evitar solapamientos
+        // Sistema anti-solapamiento
         const posicionesOcupadas = [];
         const TAMANO_DADO = 60;
-        const MARGEN_MINIMO = 10; // Espacio mínimo entre dados
-        const DISTANCIA_MINIMA = TAMANO_DADO + MARGEN_MINIMO; // 70px de separación
+        const DISTANCIA_MINIMA = 70;
 
-        function obtenerPosicionSinSolapamiento() {
+        function obtenerPosicion() {
             const maxX = zona.offsetWidth - TAMANO_DADO - 10;
             const maxY = zona.offsetHeight - TAMANO_DADO - 10;
-            const minX = 10;
-            const minY = 10;
             
-            // Intentar hasta 50 veces encontrar una posición libre
             for (let intento = 0; intento < 50; intento++) {
-                const x = Math.random() * (maxX - minX) + minX;
-                const y = Math.random() * (maxY - minY) + minY;
+                const x = Math.random() * (maxX - 10) + 10;
+                const y = Math.random() * (maxY - 10) + 10;
                 
-                // Verificar si colisiona con algún dado ya colocado
                 const colisiona = posicionesOcupadas.some(pos => {
-                    const distanciaX = Math.abs(x - pos.x);
-                    const distanciaY = Math.abs(y - pos.y);
-                    return distanciaX < DISTANCIA_MINIMA && distanciaY < DISTANCIA_MINIMA;
+                    return Math.abs(x - pos.x) < DISTANCIA_MINIMA && Math.abs(y - pos.y) < DISTANCIA_MINIMA;
                 });
                 
                 if (!colisiona) {
@@ -361,38 +347,35 @@
                 }
             }
             
-            // Si no encuentra posición libre, usar una por defecto (esquina inferior izquierda en cascada)
             const x = 20 + (posicionesOcupadas.length * 15);
             const y = zona.offsetHeight - TAMANO_DADO - 20;
             posicionesOcupadas.push({x, y});
             return {x, y};
         }
 
-        dados.forEach((idx, i) => {
+        dadosConEstado.forEach((dado, i) => {
             const d = document.createElement('div');
             d.className = 'dado';
-            d.innerHTML = CARAS[idx].html;
+            d.innerHTML = CARAS[dado.valor].html;
             
-            // Obtener posición sin solapamiento
-            const pos = obtenerPosicionSinSolapamiento();
+            const pos = obtenerPosicion();
             d.style.left = pos.x + "px"; 
             d.style.top = pos.y + "px";
             zona.appendChild(d);
             
             setTimeout(() => {
                 d.classList.add('visible');
-                const scoringIndex = pendientes.indexOf(idx);
-                if (scoringIndex !== -1) {
+                
+                if (dado.puntua) {
                     // Dado que puntúa: se mueve a la reserva
                     d.classList.add('puntuando');
-                    pendientes.splice(scoringIndex, 1);
                     setTimeout(() => {
                         d.classList.replace('puntuando', 'reservado');
                         reserva.appendChild(d);
                         d.style.position = 'static';
                     }, 800);
                 }
-                // Los dados que NO puntúan se quedan visibles en el tapete
+                // Los que no puntúan se quedan en el tapete
             }, i * 100);
         });
     }
