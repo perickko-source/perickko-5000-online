@@ -19,7 +19,7 @@
         @keyframes parpadeo { from { opacity: 0.5; } to { opacity: 1; } }
 
         #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: #050505; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); }
+        .lobby-box { background: #111; padding: 30px; border: 3px solid var(--gold); border-radius: 30px; text-align: center; width: min(92vw, 420px); max-height: 90dvh; overflow-y: auto; }
         .lobby-box h1 { color: var(--gold); margin-bottom: 20px; font-size: 28px; }
         .input-lobby { width: 80%; padding: 12px; margin: 10px 0; background: #222; border: 2px solid #555; color: white; border-radius: 10px; font-size: 16px; text-align: center; font-family: 'Arial Black', sans-serif; }
         .input-lobby:focus { border-color: var(--gold); outline: none; }
@@ -68,6 +68,34 @@
         .modal-ganador-contenido h2 { color: var(--gold); font-size: 24px; margin-bottom: 15px; }
         .nombre-ganador { color: #fff; font-size: 28px; font-weight: bold; margin: 20px 0; }
         .btn-jugar-otra { background: var(--gold); color: #000; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; }
+
+        /* MODAL INSTRUCCIONES */
+        #modal-instrucciones { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0,0,0,0.9); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        #modal-instrucciones.activo { display: flex; }
+        .modal-instrucciones-box { background: #111; border: 3px solid var(--gold); border-radius: 20px; padding: 25px; max-width: 500px; width: 100%; max-height: 90dvh; overflow-y: auto; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); position: relative; color: white; }
+        .modal-instrucciones-box h2 { margin: 0 0 10px; color: #aaa; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+        .modal-instrucciones-box h1 { margin: 0 0 15px; color: var(--gold); font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .seccion-instrucciones { text-align: left; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 12px; }
+        .seccion-instrucciones:last-child { border-bottom: none; margin-bottom: 20px; }
+        .titulo-seccion { font-size: 16px; color: var(--gold); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-family: 'Arial Black', sans-serif; }
+        .texto-instrucciones { font-size: 13px; color: #ddd; line-height: 1.4; font-family: 'Arial', sans-serif; }
+        .texto-instrucciones b { color: #fff; }
+        .aviso-instrucciones { color: var(--neon-green); font-weight: bold; font-size: 12px; margin-top: 4px; display: block; font-family: 'Arial', sans-serif; }
+        .peligro-instrucciones { color: var(--danger); }
+        .grid-dados-instrucciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
+        .carta-dado-instrucciones { background: #222; border-radius: 8px; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #444; }
+        .carta-dado-instrucciones span { font-size: 11px; color: #888; margin-top: 3px; font-family: 'Arial', sans-serif; }
+        .dado-preview { width: 40px; height: 40px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .btn-modal { background: var(--gold); color: #000; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 0 #b8860b; transition: transform 0.1s; width: 100%; font-family: 'Arial Black', sans-serif; }
+        .btn-modal:active { transform: translateY(4px); box-shadow: none; }
+        .btn-abrir-modal { width: 100%; margin-top: 15px; background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 10px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        ul.instrucciones-list, ol.instrucciones-list { list-style: none; padding: 0; margin: 5px 0; }
+        ul.instrucciones-list li, ol.instrucciones-list li { margin-bottom: 5px; position: relative; padding-left: 15px; font-family: 'Arial', sans-serif; font-size: 13px; color: #ddd; }
+        ul.instrucciones-list li::before { content: "•"; color: var(--gold); position: absolute; left: 0; font-size: 16px; top: -2px; }
+        ol.instrucciones-list { padding-left: 20px; counter-reset: item; }
+        ol.instrucciones-list li { counter-increment: item; }
+        ol.instrucciones-list li::before { content: counter(item) "."; color: var(--gold); position: absolute; left: 0; font-size: 14px; }
+        .inline-dado { display: inline-flex; width: 18px; height: 18px; background: white; border-radius: 4px; margin-right: 5px; vertical-align: middle; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -87,11 +115,12 @@
             <div id="seccion-crear">
                 <button class="btn-lobby" onclick="crearSala()">🏠 CREAR SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
+                <button class="btn-abrir-modal" onclick="abrirModalInstrucciones()">📖 INSTRUCCIONES</button>
             </div>
             <div id="seccion-unirse" style="display:none;">
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
-                <button class="btn-lobby" onclick="unirseSala()"> UNIRSE A SALA</button>
+                <button class="btn-lobby" onclick="unirseSala()">🔗 UNIRSE A SALA</button>
                 <button class="btn-lobby btn-secondary" onclick="mostrarCrear()">⬅️ VOLVER</button>
             </div>
             <div id="seccion-sala" style="display:none;">
@@ -99,9 +128,93 @@
                 <div id="codigo-sala-display"></div>
                 <ul id="lista-jugadores" class="lista-jugadores-lobby"></ul>
                 <button id="btn-iniciar" class="btn-lobby" style="border-color: var(--neon-green); color: var(--neon-green);" onclick="iniciarPartida()" disabled>▶️ INICIAR PARTIDA (Mín. 2)</button>
-                <button class="btn-lobby btn-danger" onclick="location.reload()"> CANCELAR</button>
+                <button class="btn-lobby btn-danger" onclick="location.reload()">🚪 CANCELAR</button>
             </div>
             <div id="mensaje-error" style="color: var(--danger); margin-top: 10px; font-size: 14px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL INSTRUCCIONES -->
+    <div id="modal-instrucciones">
+        <div class="modal-instrucciones-box">
+            <h2>Instrucciones</h2>
+            <h1> 5.000</h1>
+            
+            <div class="seccion-instrucciones">
+                <div class="titulo-seccion">🎯 Objetivo</div>
+                <div class="texto-instrucciones">Gana quien llegue a <b>5.000 puntos exactos</b>.</div>
+            </div>
+            
+            <div class="seccion-instrucciones">
+                <div class="titulo-seccion">💰 ¿Qué puntúa?</div>
+                <ul class="instrucciones-list" style="padding-left:15px; margin-bottom:8px;">
+                    <li><span class="inline-dado"><div style="width:10px;height:10px;background:red;border-radius:50%;"></div></span> <b>1</b> (100 pts)</li>
+                    <li><span class="inline-dado"><b style="font-size:12px; color:red;">K</b></span> <b>K 🔴</b> (50 pts)</li>
+                </ul>
+                <div class="texto-instrucciones" style="text-align:center; color:#aaa; font-size:11px; margin-bottom:6px;">Cualquier trío (3+ iguales):</div>
+                <div class="grid-dados-instrucciones">
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview">
+                            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;">
+                                <div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div>
+                                <div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div>
+                                <div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div>
+                            </div>
+                        </div>
+                        <span>3 Negros = 100</span>
+                    </div>
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview">
+                            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;">
+                                <div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div>
+                                <div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div>
+                                <div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div>
+                            </div>
+                        </div>
+                        <span>3 Rojos = 200</span>
+                    </div>
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview"><b style="font-size:18px; color:#222">J</b></div>
+                        <span>3 J = 300</span>
+                    </div>
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview"><b style="font-size:18px; color:#222">Q</b></div>
+                        <span>3 Q = 400</span>
+                    </div>
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview"><b style="font-size:18px; color:red">K</b></div>
+                        <span>3 K = 500</span>
+                    </div>
+                    <div class="carta-dado-instrucciones">
+                        <div class="dado-preview"><div style="width:18px; height:18px; background:red; border-radius:50%;"></div></div>
+                        <span>3 Ases = 1000</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="seccion-instrucciones">
+                <div class="titulo-seccion">🔄 En tu turno:</div>
+                <ol class="instrucciones-list">
+                    <li>Tira</li>
+                    <li>Los que puntúan se reservan</li>
+                    <li>¿Te plantas o arriesgas?</li>
+                </ol>
+                <div class="aviso-instrucciones">4. No puedes plantarte con valores sueltos (ej. 50 o 350). Tiene que ser número redondo.</div>
+            </div>
+            
+            <div class="seccion-instrucciones">
+                <div class="titulo-seccion">⚠️ Ojo:</div>
+                <ul class="instrucciones-list">
+                    <li>Sin puntos en la tirada → <span class="peligro-instrucciones">pierdes turno</span></li>
+                    <li>Todos puntúan → <b style="color:var(--neon-green)">tiras de nuevo con 5</b></li>
+                    <li>Para plantarte: <b>300 pts</b> (mínimo)</li>
+                    <li>A partir de 4000 puedes plantarte con un mínimo de 100, debes llegar a 5000</li>
+                    <li class="peligro-instrucciones">¡No superes 5.000!</li>
+                    <li style="color: var(--gold); font-weight: bold; margin-top: 5px;">🌟 5 Ases en una tirada = ¡Victoria instantánea!</li>
+                </ul>
+            </div>
+            
+            <button class="btn-modal" onclick="cerrarModalInstrucciones()">[ ✅ ENTENDIDO ]</button>
         </div>
     </div>
 
@@ -158,7 +271,6 @@
     let miId = socket.id, codigoSala = '', miNombre = '', esMiTurno = false, jugadores = []; 
     let puntosTurno = 0, bloqueo = false;
 
-    // Renderizado de caras de dados
     const CARAS = [
         { html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:#222;border-radius:50%;"></div></div>' },
         { html: '<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:3px; width:75%;"><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div><div></div><div style="width:7px;height:7px;background:red;border-radius:50%;"></div></div>' },
@@ -174,6 +286,11 @@
     function unirseSala() { miNombre = document.getElementById('input-nombre').value.trim(); codigoSala = document.getElementById('input-codigo').value.trim().toUpperCase(); if (!miNombre) return mostrarError("Pon un nombre"); if (!codigoSala) return mostrarError("Pon un código"); socket.emit('unirse-sala', { codigo: codigoSala, nombre: miNombre }); }
     function iniciarPartida() { socket.emit('iniciar-partida', codigoSala); decir("Empieza la partida. ¡Suerte!"); }
     function mostrarError(msg) { document.getElementById('mensaje-error').innerText = msg; setTimeout(() => document.getElementById('mensaje-error').innerText = '', 3000); }
+
+    // MODAL INSTRUCCIONES
+    function abrirModalInstrucciones() { document.getElementById('modal-instrucciones').classList.add('activo'); }
+    function cerrarModalInstrucciones() { document.getElementById('modal-instrucciones').classList.remove('activo'); }
+    document.getElementById('modal-instrucciones').addEventListener('click', e => { if(e.target.id === 'modal-instrucciones') cerrarModalInstrucciones(); });
 
     socket.on('sala-creada', (data) => {
         codigoSala = data.codigo; miId = socket.id;
@@ -208,16 +325,12 @@
         actualizarTurnoUI(data.turno);
     });
 
-    // NUEVO: El servidor envía exactamente qué dados puntúan
     socket.on('resultado-tirada', (data) => {
         bloqueo = false;
         puntosTurno = data.puntosTurno;
         document.getElementById('pts-turno').innerText = puntosTurno;
 
-        // Limpiar zona de tiro antes de mostrar nuevos dados
         limpiarZonaActiva();
-        
-        // Renderizar dados EXACTAMENTE como los envía el servidor
         renderizarDados(data.dados);
 
         if (data.mesaLimpia) {
@@ -308,7 +421,7 @@
     function actualizarListaLobby(jugadores) {
         const lista = document.getElementById('lista-jugadores');
         lista.innerHTML = '';
-        jugadores.forEach(j => lista.innerHTML += `<li>👤 ${j.nombre}</li>`);
+        jugadores.forEach(j => lista.innerHTML += `<li> ${j.nombre}</li>`);
     }
 
     function limpiarZonaActiva() { 
@@ -319,12 +432,10 @@
         document.getElementById('reserva').innerHTML = ""; 
     }
 
-    // NUEVO: Renderiza dados exactamente como los envía el servidor
     function renderizarDados(dadosConEstado) {
         const zona = document.getElementById('zona-tiro');
         const reserva = document.getElementById('reserva');
         
-        // Sistema anti-solapamiento
         const posicionesOcupadas = [];
         const TAMANO_DADO = 60;
         const DISTANCIA_MINIMA = 70;
@@ -367,7 +478,6 @@
                 d.classList.add('visible');
                 
                 if (dado.puntua) {
-                    // Dado que puntúa: se mueve a la reserva
                     d.classList.add('puntuando');
                     setTimeout(() => {
                         d.classList.replace('puntuando', 'reservado');
@@ -375,7 +485,6 @@
                         d.style.position = 'static';
                     }, 800);
                 }
-                // Los que no puntúan se quedan en el tapete
             }, i * 100);
         });
     }
