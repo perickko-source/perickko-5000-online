@@ -163,7 +163,7 @@
             <input type="text" id="input-nombre" class="input-lobby" placeholder="Tu nombre" maxlength="10">
             
             <div id="seccion-crear">
-                <button class="btn-opcion" onclick="crearSala()"> CREAR SALA</button>
+                <button class="btn-opcion" onclick="crearSala()">🏠 CREAR SALA</button>
                 <button class="btn-opcion btn-secondary" onclick="mostrarUnirse()">¿TIENES UN CÓDIGO? UNIRSE</button>
             </div>
             
@@ -171,7 +171,7 @@
                 <p style="color:#aaa; font-size:12px;">Código de sala:</p>
                 <input type="text" id="input-codigo" class="input-lobby" placeholder="Ej: ABC123" style="text-transform:uppercase;">
                 <button class="btn-opcion" onclick="unirseSala()">🔗 UNIRSE A SALA</button>
-                <button class="btn-opcion btn-secondary" onclick="mostrarCrear()">⬅️ VOLVER</button>
+                <button class="btn-opcion btn-secondary" onclick="mostrarCrear()">️ VOLVER</button>
             </div>
             
             <div id="seccion-sala" style="display:none;">
@@ -191,7 +191,7 @@
     <div id="modal-instrucciones">
         <div class="modal-box">
             <h2>Instrucciones</h2><h1>🎲 5.000</h1>
-            <div class="seccion-modal"><div class="titulo-seccion">🎯 Objetivo</div><div class="texto-modal">Gana quien llegue a <b>5.000 puntos exactos</b>.</div></div>
+            <div class="seccion-modal"><div class="titulo-seccion"> Objetivo</div><div class="texto-modal">Gana quien llegue a <b>5.000 puntos exactos</b>.</div></div>
             <div class="seccion-modal"><div class="titulo-seccion">💰 ¿Qué puntúa?</div><ul class="modal-list" style="padding-left:15px; margin-bottom:8px;"><li><span class="inline-dado"><div style="width:10px;height:10px;background:red;border-radius:50%;"></div></span> <b>1</b> (100 pts)</li><li><span class="inline-dado"><b style="font-size:12px; color:red;">K</b></span> <b>K </b> (50 pts)</li></ul><div class="texto-modal" style="text-align:center; color:#aaa; font-size:11px; margin-bottom:6px;">Cualquier trío (3+ iguales):</div><div class="grid-dados-modal"><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:#222;border-radius:50%;"></div></div></div><span>3 Negros = 100</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px; width:70%;"><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div><div></div><div style="width:5px;height:5px;background:red;border-radius:50%;"></div></div></div><span>3 Rojos = 200</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">J</b></div><span>3 J = 300</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:#222">Q</b></div><span>3 Q = 400</span></div><div class="carta-dado-modal"><div class="dado-preview"><b style="font-size:18px; color:red">K</b></div><span>3 K = 500</span></div><div class="carta-dado-modal"><div class="dado-preview"><div style="width:18px; height:18px; background:red; border-radius:50%;"></div></div><span>3 Ases = 1000</span></div></div></div>
             <div class="seccion-modal"><div class="titulo-seccion">🔄 En tu turno:</div><ol class="modal-list"><li>Tira</li><li>Los que puntúan se reservan</li><li>¿Te plantas o arriesgas?</li></ol><div class="aviso-modal">4. No puedes plantarte con valores sueltos (ej. 50 o 350). Tiene que ser número redondo.</div></div>
             <div class="seccion-modal"><div class="titulo-seccion">⚠️ Ojo:</div><ul class="modal-list"><li>Sin puntos en la tirada → <span class="peligro-modal">pierdes turno</span></li><li>Todos puntúan → <b style="color:var(--neon-green)">tiras de nuevo con 5</b></li><li>Para plantarte: <b>300 pts</b> (mínimo)</li><li>A partir de 4000 puedes plantarte con un mínimo de 100, debes llegar a 5000</li><li class="peligro-modal">¡No superes 5.000!</li><li style="color: var(--gold); font-weight: bold; margin-top: 5px;">🌟 5 Ases en una tirada = ¡Victoria instantánea!</li></ul></div>
@@ -217,7 +217,7 @@
 
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2>🏆 ¡GANADOR!</h2>
+            <h2> ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 JUGAR OTRA PARTIDA</button>
         </div>
@@ -245,6 +245,7 @@
     let puntosTurno = 0;
     let dadosActivos = 5;
     let bloqueo = false;
+    let esperandoDados = false; // FIX: Nueva variable para controlar el estado
     const frasesCero = ["¡Cero Patatero!", "¡Una Mierda para ti!", "¡Nada de nada!", "¡Ostia Puta, Ni un puto punto!", "¡Otra vez cero, ja ja ja!", "¡Cero, ahora vas y lo cascas!"];
 
     function decir(texto, opciones = {}) {
@@ -324,7 +325,12 @@
     });
 
     socket.on('dados-tirados', (data) => {
-        // FIX: NO poner bloqueo = false aquí, se maneja en resolverTirada
+        // FIX: Solo procesar si estamos esperando dados
+        if (!esperandoDados) {
+            console.log('dados-tirados recibido pero no esperando, ignorando');
+            return;
+        }
+        esperandoDados = false;
         resolverTirada(data.dados);
     });
 
@@ -347,6 +353,7 @@
         puntosTurno = 0;
         dadosActivos = 5;
         bloqueo = false;
+        esperandoDados = false; // FIX: Resetear estado
         turnoIdx = data.turno;
         jugadores = data.jugadores;
         renderizarMarcador();
@@ -359,9 +366,10 @@
     socket.on('turno-perdido', (data) => {
         document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada.</b>`;
         decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
-        // FIX: Asegurar que los botones estén deshabilitados
         document.getElementById('btn-tirar').disabled = true;
         document.getElementById('btn-plantar').disabled = true;
+        bloqueo = true;
+        esperandoDados = false;
         setTimeout(() => {
             limpiarTodo();
         }, 2000);
@@ -399,8 +407,9 @@
     }
 
     function tirar() {
-        if (bloqueo || !esMiTurno) return;
+        if (bloqueo || !esMiTurno || esperandoDados) return;
         bloqueo = true;
+        esperandoDados = true; // FIX: Marcar que estamos esperando dados
         limpiarZonaActiva();
         if (dadosActivos === 0 || dadosActivos > 5) dadosActivos = 5;
         
@@ -412,6 +421,16 @@
         document.getElementById('btn-plantar').disabled = true;
 
         socket.emit('tirar-dados', { codigo: codigoSala, dadosActivos });
+        
+        // FIX: Timeout de seguridad por si el servidor no responde
+        setTimeout(() => {
+            if (esperandoDados) {
+                console.error('Timeout esperando dados-tirados');
+                bloqueo = false;
+                esperandoDados = false;
+                actualizarBotones();
+            }
+        }, 3000);
     }
 
     function resolverTirada(indices) {
@@ -419,6 +438,7 @@
             decir("¡CINCO ASES! ¡VICTORIA INSTANTÁNEA!");
             setTimeout(() => { mostrarModalGanador(jugadores[turnoIdx].nombre); }, 800);
             bloqueo = false;
+            esperandoDados = false;
             return;
         }
 
@@ -473,14 +493,13 @@
 
         setTimeout(() => {
             if (ptsTirada === 0) {
-                // FIX: Bloquear inmediatamente para evitar que tire de nuevo
                 bloqueo = true;
+                esperandoDados = false;
                 document.getElementById('btn-tirar').disabled = true;
                 document.getElementById('btn-plantar').disabled = true;
                 document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
                 decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
                 
-                // FIX: Emitir perder-turno después de 2 segundos
                 setTimeout(() => { 
                     socket.emit('perder-turno', codigoSala); 
                 }, 2000);
@@ -498,12 +517,14 @@
                     limpiarTodo(); 
                     dadosActivos = 5;
                     bloqueo = false; 
+                    esperandoDados = false;
                     actualizarBotones(); 
                 }, 1500);
                 return;
             }
 
             bloqueo = false;
+            esperandoDados = false;
             actualizarBotones();
         }, 2200);
     }
@@ -548,6 +569,7 @@
         }
 
         bloqueo = true;
+        esperandoDados = false;
         let fraseTaunt = "";
         if (dadosActivos === 5) fraseTaunt = "¡Cagao!";
         else if (dadosActivos === 4) fraseTaunt = "¡Qué gallina!";
