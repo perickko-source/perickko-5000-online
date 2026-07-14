@@ -217,7 +217,7 @@
 
     <div id="modal-ganador">
         <div class="modal-ganador-contenido">
-            <h2> ¡GANADOR!</h2>
+            <h2>🏆 ¡GANADOR!</h2>
             <div id="nombre-ganador" class="nombre-ganador"></div>
             <button class="btn-jugar-otra" onclick="location.reload()">🔄 JUGAR OTRA PARTIDA</button>
         </div>
@@ -324,9 +324,7 @@
     });
 
     socket.on('dados-tirados', (data) => {
-        // FIX: Limpiar TODO antes de mostrar nuevos dados
-        limpiarTodo();
-        bloqueo = false;
+        // FIX: NO poner bloqueo = false aquí, se maneja en resolverTirada
         resolverTirada(data.dados);
     });
 
@@ -361,6 +359,9 @@
     socket.on('turno-perdido', (data) => {
         document.getElementById('anuncio').innerHTML = `<b style='color:red'>${data.jugador} no sacó nada.</b>`;
         decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
+        // FIX: Asegurar que los botones estén deshabilitados
+        document.getElementById('btn-tirar').disabled = true;
+        document.getElementById('btn-plantar').disabled = true;
         setTimeout(() => {
             limpiarTodo();
         }, 2000);
@@ -371,7 +372,6 @@
     }
     
     function limpiarTodo() {
-        // FIX: Limpiar TODOS los dados, no solo los de zona-tiro
         document.querySelectorAll('.dado').forEach(d => d.remove());
         document.getElementById('reserva').innerHTML = "";
     }
@@ -381,7 +381,6 @@
         const maxX = zona.offsetWidth - dadoSize - margen, maxY = zona.offsetHeight - dadoSize - margen;
         for(let i=0; i<100; i++) {
             let x = Math.random() * (maxX - margen) + margen, y = Math.random() * (maxY - margen) + margen;
-            // FIX: Verificar colisiones con dados existentes en la zona
             const dadosExistentes = document.querySelectorAll('#zona-tiro .dado');
             let colisiona = false;
             for (let dado of dadosExistentes) {
@@ -474,9 +473,17 @@
 
         setTimeout(() => {
             if (ptsTirada === 0) {
+                // FIX: Bloquear inmediatamente para evitar que tire de nuevo
+                bloqueo = true;
+                document.getElementById('btn-tirar').disabled = true;
+                document.getElementById('btn-plantar').disabled = true;
                 document.getElementById('anuncio').innerHTML = "<b style='color:red'>¡NADA! PIERDES TURNO</b>";
                 decir(frasesCero[Math.floor(Math.random() * frasesCero.length)]);
-                setTimeout(() => { socket.emit('perder-turno', codigoSala); }, 2000);
+                
+                // FIX: Emitir perder-turno después de 2 segundos
+                setTimeout(() => { 
+                    socket.emit('perder-turno', codigoSala); 
+                }, 2000);
                 return;
             }
 
@@ -581,7 +588,7 @@
     function actualizarListaLobby(jugadores) {
         const lista = document.getElementById('lista-jugadores');
         lista.innerHTML = '';
-        jugadores.forEach(j => lista.innerHTML += `<li>👤 ${j.nombre}</li>`);
+        jugadores.forEach(j => lista.innerHTML += `<li> ${j.nombre}</li>`);
     }
 
     function abrirModal() { document.getElementById('modal-instrucciones').classList.add('activo'); }
